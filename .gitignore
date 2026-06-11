@@ -5,3 +5,5 @@ agents.md
 CLAUDE.md
 history
 test.py
+outputs
+*.pyc
