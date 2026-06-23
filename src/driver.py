@@ -8,7 +8,7 @@ From the src/ directory:
     # run a condition
     python driver.py --condition C3 --timesteps 12
 
-Defaults: agents from ../agents_initialised.json, network at
+Defaults: agents from ../agents_final_100.json, network at
 ../outputs/social_network.json, results in ../outputs/.
 """
 
@@ -23,12 +23,13 @@ from utils.generate_utils import LLMClient
 from utils.network_utils import load_network
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_AGENTS = os.path.join(HERE, "..", "agents_initialised.json")
+DEFAULT_AGENTS = os.path.join(HERE, "..", "agents_final_100.json")
 DEFAULT_OUTPUT_DIR = os.path.join(HERE, "..", "outputs")
 DEFAULT_NETWORK = os.path.join(DEFAULT_OUTPUT_DIR, "social_network.json")
 
 
 def main():
+    """Parse CLI args, build the agents/LLM/network/scorer, and run the simulation."""
     parser = argparse.ArgumentParser(description="Singapore fertility intention ABM")
     parser.add_argument("--agents", default=DEFAULT_AGENTS)
     parser.add_argument("--network", default=DEFAULT_NETWORK)
@@ -52,8 +53,13 @@ def main():
     llm = LLMClient()
     print(f"LLM: {llm.provider} / {llm.model}")
 
+    # The chosen condition unpacks into two switches that control what inputs
+    # agents receive: C0=(off,off), C1=(off,on), C2=(on,off), C3=(on,on).
     policy_on, social_on = CONDITIONS[args.condition]
 
+    # The network is only needed when social posts are on. It must cover every
+    # agent we're running (it's keyed by agent_id) — otherwise a follower lookup
+    # would fail mid-run, so we validate up front and fail fast.
     network = {}
     if social_on:
         network = load_network(args.network)

@@ -18,6 +18,14 @@ NEUTRAL_BELIEF_STATE = {
 
 
 class Agent:
+    """One simulated Singapore resident, stored as three stacked layers:
+
+    Layer 1 (static profile) is read from the agent JSON and never changes.
+    Layer 2 (`belief_state`) holds the three TPB scores + fertility-intention
+    distribution and is overwritten each week by the LLM belief update.
+    Layer 3 (`lessons`) is the memory stream, a growing list of Lesson objects.
+    """
+
     def __init__(self, profile):
         # ── Layer 1: static profile ────────────────────────────────────────
         self.agent_id = profile["agent_id"]
@@ -49,6 +57,7 @@ class Agent:
     # ── Memory stream ──────────────────────────────────────────────────────
 
     def add_lesson(self, lesson):
+        """Append a new memory (Lesson) to this agent's memory stream."""
         self.lessons.append(lesson)
 
     @property
@@ -63,6 +72,14 @@ class Agent:
 
     def update_belief_state(self, attitude_score, subjective_norm_score, pbc_score,
                             fertility_intention, timestep):
+        """Overwrite Layer 2 with the LLM's new TPB scores for this week.
+
+        The LLM is free-form, so we defensively coerce its output:
+        `clamp(..., 1.0, 5.0)` forces each score back onto the valid 1-5 TPB
+        scale, and `normalise_distribution` repairs the intention list so it is
+        5 non-negative floats summing to 1.0. The previous state is appended to
+        `belief_history` first so the full weekly trajectory is preserved.
+        """
         self.belief_state = {
             "attitude_score": clamp(float(attitude_score), 1.0, 5.0),
             "subjective_norm_score": clamp(float(subjective_norm_score), 1.0, 5.0),
@@ -74,6 +91,7 @@ class Agent:
     # ── Tweets ─────────────────────────────────────────────────────────────
 
     def post_tweet(self, text, timestep):
+        """Create and store a social post by this agent (readable by followers at t+1)."""
         tweet = Tweet(self.agent_id, text, timestep)
         self.tweets.append(tweet)
         return tweet
@@ -101,6 +119,7 @@ class Agent:
     # ── Serialisation ──────────────────────────────────────────────────────
 
     def to_dict(self):
+        """Flatten all three layers into a JSON-serialisable dict (used by save())."""
         return {
             "agent_id": self.agent_id,
             "age": self.age,

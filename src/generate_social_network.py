@@ -29,11 +29,19 @@ RANDOM_STATE = 42
 logger = get_logger("network")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_AGENTS = os.path.join(HERE, "..", "agents_initialised.json")
+DEFAULT_AGENTS = os.path.join(HERE, "..", "agents_final_100.json")
 DEFAULT_OUTPUT = os.path.join(HERE, "..", "outputs", "social_network.json")
 
 
 def _parse_friend_indices(response, self_idx, num_agents):
+    """Pull friend indices out of the LLM's free-text reply.
+
+    Grabs every run of digits (`\\d+`), then keeps those that are valid: not the
+    agent itself, in range [0, num_agents), and not already seen. Brittle by
+    design — it trusts the prompt's "IDs only" instruction; stray numbers in the
+    text (e.g. "agent 12") would be misread. Raises if nothing valid is found so
+    the caller can retry.
+    """
     indices = []
     for token in re.findall(r"\d+", response):
         i = int(token)
@@ -95,6 +103,8 @@ def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STAT
                 logger.warning(f"{agent.agent_id}: LLM failed {max_try} times, "
                                f"left edgeless (fallback_k=0)")
 
+        # `friends` are list positions; translate them back to agent_ids for the
+        # stored graph ({agent_id: [followed agent_ids]}).
         network[agent.agent_id] = [agents[i].agent_id for i in friends]
         if verbose:
             logger.info(f"{agent.agent_id}: {len(friends)} friends")
