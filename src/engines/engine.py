@@ -8,7 +8,9 @@ for each agent:
    each scored for TPB relevance.
 4-6. Retrieve memories: saliency decay + TPB relevance, <=5 seed + <=5 per
    construct, max 20 (lesson.retrieve_memories).
-7. LLM updates TPB scores + fertility intention distribution + reflection.
+7. Two independent LLM calls: (7a) update TPB scores + reflection, and (7b)
+   update the fertility-intention distribution WITHOUT seeing the TPB scores,
+   so the TPB->intention link is measured (mediation), not instructed.
 8. Agent may post a fertility-related message (visible to followers at t+1).
 9. State saved after every timestep.
 """
@@ -21,9 +23,10 @@ import time
 from sandbox.lesson import Lesson
 from utils.logging_utils import setup_logger
 from sandbox.prompts import (
-    build_belief_update_prompt,
+    build_intention_update_prompt,
     build_perception_prompt,
     build_seed_memory_prompt,
+    build_tpb_update_prompt,
     build_tweet_prompt,
 )
 
@@ -129,8 +132,10 @@ class Simulation:
 
         Per agent: perceive policy news (1) and friends' t-1 posts (2) into
         memories, retrieve the most relevant ones (4-6), ask the LLM for the new
-        TPB state + reflection (7), and optionally post a tweet (8). The whole
-        world state is saved once at the end of the week (9).
+        TPB scores + reflection (7a) and — in a separate call that never sees
+        those scores — the new fertility-intention distribution (7b), and
+        optionally post a tweet (8). The whole world state is saved once at the
+        end of the week (9).
         """
         self.current_timestep = timestep
         step_start = time.time()
@@ -165,20 +170,26 @@ class Simulation:
                               f"{len(new_messages)} messages, retrieved "
                               f"{len(retrieved)} memories {construct_map}")
 
-            # 7. belief update + reflection
-            system, user = build_belief_update_prompt(agent, retrieved, new_messages, timestep)
-            out = self.llm.chat_json(system, user)
+            # 7a. TPB update (attitude/norm/pbc + reflection) — intention NOT
+            #     generated here.
+            sys_t, usr_t = build_tpb_update_prompt(agent, retrieved, new_messages, timestep)
+            tpb_out = self.llm.chat_json(sys_t, usr_t)
+            # 7b. Fertility intention — generated independently, WITHOUT seeing the
+            #     numeric TPB scores, so the TPB->intention link is measured
+            #     (mediation), not instructed.
+            sys_i, usr_i = build_intention_update_prompt(agent, retrieved, new_messages, timestep)
+            int_out = self.llm.chat_json(sys_i, usr_i)
             agent.update_belief_state(
-                out["attitude_score"],
-                out["subjective_norm_score"],
-                out["pbc_score"],
-                out["fertility_intention"],
+                tpb_out["attitude_score"],
+                tpb_out["subjective_norm_score"],
+                tpb_out["pbc_score"],
+                int_out["fertility_intention"],
                 timestep,
             )
             for lesson in retrieved:
                 lesson.used_in_update = True
 
-            reflection_text = out.get("reflection_memory") or ""
+            reflection_text = tpb_out.get("reflection_memory") or ""
             if reflection_text:
                 agent.add_lesson(Lesson(
                     agent_id=agent.agent_id,

@@ -89,6 +89,15 @@ class LLMClient:
                     continue
                 resp.raise_for_status()
                 content = resp.json()["choices"][0]["message"]["content"]
+                # Reasoning models occasionally return null/empty content (the
+                # budget went to the hidden reasoning trace). Treat as transient
+                # and retry rather than crashing downstream on len(None).
+                if not content:
+                    last_error = "empty/None content in response"
+                    logger.warning(f"empty content (attempt {attempt + 1}/"
+                                   f"{self.max_retries}), retrying")
+                    time.sleep(self.retry_wait * (attempt + 1))
+                    continue
                 logger.debug(f"{self.model} ok in {time.time() - start:.1f}s "
                              f"(attempt {attempt + 1}, prompt {len(system) + len(user)} "
                              f"chars, response {len(content)} chars)")
