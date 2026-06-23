@@ -12,6 +12,13 @@ _id_counter = itertools.count(1)
 
 
 class News:
+    """A weekly policy news item shown to agents in conditions C2/C3.
+
+    `text` is the message the agent actually reads (defaults to a sentence built
+    from the policy name + description). The full `policy` object is kept for
+    traceability; `to_dict` only serialises its name/category to stay JSON-safe.
+    """
+
     def __init__(self, policy, timestep, text=None, news_id=None):
         self.news_id = news_id or f"N{next(_id_counter):04d}"
         self.policy = policy

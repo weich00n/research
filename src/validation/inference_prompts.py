@@ -64,6 +64,7 @@ Respond ONLY with valid JSON: {"status": "Single" | "Dating", "reasoning": "<two
 
 
 def build_fin_prompt(row) -> str:
+    """v1 financial user message: demographics only (age/gender/edu/occ/industry/area)."""
     return (
         f"Age: {row['age']}\n"
         f"Gender: {row['gender']}\n"
@@ -75,6 +76,7 @@ def build_fin_prompt(row) -> str:
 
 
 def build_fin_prompt_v2(row) -> str:
+    """v2 financial user message: the v1 fields PLUS persona + career goals."""
     return (
         build_fin_prompt(row) + "\n"
         f"Persona: {row['persona']}\n"
@@ -83,6 +85,7 @@ def build_fin_prompt_v2(row) -> str:
 
 
 def build_rel_prompt(row) -> str:
+    """Relationship user message: demographics + persona/cultural/hobbies/career (shared by v1 & v2)."""
     return (
         f"Age: {row['age']}\n"
         f"Gender: {row['gender']}\n"

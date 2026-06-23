@@ -53,6 +53,12 @@ TARGETS = {
 
 
 def stratified_sample(df, targets, seed):
+    """Sample `targets[(gender, rel)]` rows from each gender×marital cell (no replacement).
+
+    Each cell is sampled independently to hit its exact target, so the combined
+    sample matches the M&P gender×marital proportions. Raises if any cell's pool
+    is too small to meet its target.
+    """
     frames = []
     for (gender, rel), n in targets.items():
         cell = df[(df["gender"] == gender) & (df["rel_status"] == rel)]
@@ -67,6 +73,8 @@ def main():
 
     ds = load_dataset("nvidia/Nemotron-Personas-Singapore")
     df = pd.DataFrame(ds["train"])
+    # FIELD_MAP is {our_name: dataset_name}; pandas rename wants {old: new}, so we
+    # invert it to {dataset_name: our_name}. Then keep only our renamed columns.
     df = df.rename(columns={v: k for k, v in FIELD_MAP.items()})
     df = df[list(FIELD_MAP)].copy()
 

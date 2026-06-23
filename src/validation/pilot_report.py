@@ -51,6 +51,14 @@ def alpha_or_none(pivot, level):
 
 
 def mean_pairwise_kappa(pivot, weights=None):
+    """Average Cohen's kappa over every pair of raters (rows of `pivot`).
+
+    `weights="quadratic"` is used for the ordinal fin score so disagreeing by 3
+    points is penalised far more than by 1. For each rater pair we keep only the
+    personas both rated (`dropna`) and skip the pair if either rater gave the
+    same score to everything (`nunique() > 1`) — kappa is undefined with zero
+    variance.
+    """
     kappas = []
     for a, b in combinations(pivot.index, 2):
         pair = pivot.loc[[a, b]].dropna(axis=1)
@@ -73,6 +81,8 @@ def report_version(df, version, personas):
     print("\nScore distribution:")
     print(dist.to_string())
 
+    # Pivot to raters (rows) × personas (cols); both agreement metrics expect
+    # one row per rater. fin_score is treated as ORDINAL (1-5 has a natural order).
     fin_pivot = sub.pivot_table(index="model_tag", columns="persona_id",
                                 values="fin_score")
     alpha = alpha_or_none(fin_pivot, "ordinal")
@@ -93,6 +103,8 @@ def report_version(df, version, personas):
     print("% Dating per model:")
     print((share * 100).round(1).to_string())
 
+    # rel_status is NOMINAL (Single vs Dating, no order), so we encode it 0/1 and
+    # ask Krippendorff for nominal-level agreement.
     rel_pivot = rel.pivot_table(index="model_tag", columns="persona_id",
                                 values="rel_status", aggfunc="first")
     codes = rel_pivot.map({"Single": 0, "Dating": 1}.get)
@@ -133,7 +145,8 @@ def main():
           + ", ".join(f"{m}/{v} n={len(g)}" for (m, v), g
                       in df.groupby(["model_tag", "prompt_version"])))
 
-    # Fair comparison: only personas rated under every version present
+    # Fair comparison: only personas rated under every version present, so v1 and
+    # v2 are scored on the exact same set (intersection of persona_ids per version).
     if len(versions) > 1:
         common = set.intersection(*(set(df[df["prompt_version"] == v]["persona_id"])
                                     for v in versions))

@@ -9,14 +9,22 @@ _id_counter = itertools.count(1)
 
 
 class Tweet:
+    """A fertility-related social post by one agent.
+
+    The key rule is the one-week lag: a post written in week t becomes readable
+    by followers only from week t+1 (`available_from_timestep = t + 1`), so an
+    agent never reacts to a post in the same week it was written.
+    """
+
     def __init__(self, agent_id, text, created_timestep, tweet_id=None):
         self.tweet_id = tweet_id or f"T{next(_id_counter):06d}"
         self.agent_id = agent_id
         self.text = text
         self.created_timestep = created_timestep
-        self.available_from_timestep = created_timestep + 1
+        self.available_from_timestep = created_timestep + 1  # visible from t+1
 
     def visible_at(self, timestep):
+        """True if followers can read this post at `timestep` (i.e. t >= t_created+1)."""
         return timestep >= self.available_from_timestep
 
     def to_dict(self):

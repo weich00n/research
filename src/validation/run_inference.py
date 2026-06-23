@@ -57,7 +57,11 @@ def load_done(path):
             for line in f:
                 if line.strip():
                     rec = json.loads(line)
+                    # Keying by persona_id means a later (retry) line overwrites
+                    # an earlier one, so the last attempt per persona wins.
                     records[rec["persona_id"]] = rec
+    # "Done" = has a final record with no error; failed personas are excluded so
+    # they get retried on the next run.
     return {pid for pid, rec in records.items() if not rec.get("error")}
 
 

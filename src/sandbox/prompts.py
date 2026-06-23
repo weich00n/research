@@ -48,6 +48,7 @@ Respond with JSON only:
 
 
 def build_seed_memory_prompt(agent):
+    """(system, user) prompt asking the LLM for 5 first-person seed memories."""
     user = (
         "Profile of the person:\n"
         f"{profile_to_str(agent)}\n\n"
@@ -89,6 +90,7 @@ Respond with JSON only:
 
 
 def build_relevance_prompt(memory_text):
+    """(system, user) prompt asking the LLM to score one memory's TPB relevance."""
     user = f'Memory: "{memory_text}"\n\nScore its TPB relevance as JSON.'
     return TPB_RELEVANCE_SYSTEM, user
 
@@ -117,6 +119,11 @@ Respond with JSON only:
 
 
 def build_perception_prompt(agent, message_text, message_kind):
+    """(system, user) prompt turning an incoming message into a 1-sentence memory.
+
+    `message_kind` is a human label for the source ("news report" / "social
+    media post") so the prompt reads naturally.
+    """
     user = (
         "Profile of the person:\n"
         f"{profile_to_str(agent)}\n\n"
@@ -160,6 +167,13 @@ Respond with JSON only:
 
 
 def build_belief_update_prompt(agent, retrieved_lessons, new_messages, current_timestep):
+    """(system, user) prompt for the weekly TPB update.
+
+    Assembles the user message from: the agent profile, the current TPB scores,
+    the retrieved memories (rendered as a numbered list via compile_enumerate),
+    and any new messages read this week. The LLM returns the new scores +
+    intention distribution + a reflection sentence.
+    """
     belief = agent.belief_state
     memory_lines = [
         f"(t={l.created_timestep}, {l.source_type}) {l.memory_text}"
@@ -205,6 +219,7 @@ Respond with JSON only:
 
 
 def build_tweet_prompt(agent, reflection_text, current_timestep):
+    """(system, user) prompt asking the LLM whether (and what) the agent posts."""
     belief = agent.belief_state
     user = (
         "Profile of the person:\n"

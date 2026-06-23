@@ -21,12 +21,18 @@ from sklearn.metrics import cohen_kappa_score
 
 
 def load_agents(path):
+    """Load an agents JSON file as a dict keyed by agent_id."""
     with open(path, encoding="utf-8") as f:
         agents = json.load(f)
     return {a["agent_id"]: a for a in agents}
 
 
 def field_diff_summary(nemotron, llama, agent_ids):
+    """Count, per field, how many agents differ between the two files.
+
+    Values are compared via `json.dumps(..., sort_keys=True)` so nested
+    dicts/lists compare equal regardless of key order or formatting.
+    """
     fields = sorted(nemotron[agent_ids[0]].keys())
     rows = []
     for field in fields:
@@ -40,6 +46,7 @@ def field_diff_summary(nemotron, llama, agent_ids):
 
 
 def build_comparison_df(nemotron, llama, agent_ids):
+    """Build a per-agent table of the two files' inferred fields + their deltas."""
     rows = []
     for aid in agent_ids:
         a, b = nemotron[aid], llama[aid]
@@ -61,6 +68,13 @@ def build_comparison_df(nemotron, llama, agent_ids):
 
 
 def report(df, summary):
+    """Print the field-diff summary, financial-score agreement, and rel-status agreement.
+
+    Financial agreement uses quadratic-weighted Cohen's kappa (fin is an ordinal
+    1-5 score, so near-misses should count more than far-misses). Relationship
+    agreement is computed only over `llm_imputed` agents — the rest take rel
+    status straight from raw marital status and cannot differ between files.
+    """
     n = len(df)
 
     print("=" * 70)

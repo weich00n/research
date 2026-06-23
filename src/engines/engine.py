@@ -41,6 +41,13 @@ REFLECTION_IMPORTANCE = 0.6
 
 
 class Simulation:
+    """Drives the weekly loop for one experimental condition (C0-C3).
+
+    Holds the agents, the social network, the LLM client, the relevance
+    `scorer`, and (for policy conditions) the news schedule. `run()` is the
+    entry point; `step()` does one week; `save()` checkpoints to JSON.
+    """
+
     def __init__(self, agents, network, condition, llm, scorer,
                  news_schedule=None, output_dir="outputs", run_name=None,
                  verbose=True):
@@ -118,6 +125,13 @@ class Simulation:
         return lesson
 
     def step(self, timestep):
+        """Run one simulation week for every agent (CLAUDE.md steps 1-9).
+
+        Per agent: perceive policy news (1) and friends' t-1 posts (2) into
+        memories, retrieve the most relevant ones (4-6), ask the LLM for the new
+        TPB state + reflection (7), and optionally post a tweet (8). The whole
+        world state is saved once at the end of the week (9).
+        """
         self.current_timestep = timestep
         step_start = time.time()
         policy_on, social_on = CONDITIONS[self.condition]
@@ -194,6 +208,9 @@ class Simulation:
                          f"state saved to {path}")
 
     def run(self, num_timesteps, start_timestep=1):
+        """Initialise seed memories (once, if missing) then step `num_timesteps` weeks."""
+        # Seed memories are the week-0 background beliefs; only generated if the
+        # agents don't already have them (so re-runs / resumes skip the LLM cost).
         if not all(a.seed_lessons for a in self.agents):
             self.initialise_seed_memories()
             self.save()
@@ -204,6 +221,11 @@ class Simulation:
     # ── Persistence ────────────────────────────────────────────────────────
 
     def save(self):
+        """Write the full world state (condition, week, network, all agents) to JSON.
+
+        Called after every week, so the latest <run_name>.json is always a
+        complete, inspectable snapshot of the run.
+        """
         os.makedirs(self.output_dir, exist_ok=True)
         path = os.path.join(self.output_dir, f"{self.run_name}.json")
         state = {

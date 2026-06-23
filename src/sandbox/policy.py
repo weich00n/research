@@ -10,6 +10,13 @@ CAREGIVING = "caregiving"
 
 
 class Policy:
+    """One real Singapore fertility-support instrument.
+
+    `expected_pathways` is the researcher's hypothesis about which TPB
+    construct(s) this policy should move (a subset of attitude/norm/pbc). It is
+    metadata for analysis only — it is never shown to the agent or the LLM.
+    """
+
     def __init__(self, name, category, description, expected_pathways):
         self.name = name
         self.category = category

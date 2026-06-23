@@ -27,8 +27,18 @@ DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
 
 
 class LLMClient:
+    """Talks to one chat-completions endpoint (OpenRouter or local), with retries.
+
+    The provider, URL, key and model are resolved from `.env` at construction
+    (see the module docstring). `chat()` returns raw text; `chat_json()` parses
+    the response into a Python object. Both retry on transient failures.
+    """
+
     def __init__(self, provider=None, model=None, temperature=0.7,
                  max_retries=6, retry_wait=5, timeout=120):
+        # Provider is chosen by the `provider` arg, else LLM_PROVIDER in .env,
+        # else "openrouter". Each branch below validates that its required env
+        # vars exist and raises a helpful error if not.
         self.provider = (provider or os.getenv("LLM_PROVIDER", "openrouter")).lower()
         self.temperature = temperature
         self.max_retries = max_retries
@@ -84,6 +94,9 @@ class LLMClient:
                              f"chars, response {len(content)} chars)")
                 return content
             except (requests.RequestException, KeyError, IndexError) as e:
+                # Network errors (RequestException) and malformed responses
+                # (KeyError/IndexError when digging into the JSON) are both
+                # treated as transient: back off linearly and retry.
                 last_error = e
                 logger.warning(f"LLM call failed (attempt {attempt + 1}/"
                                f"{self.max_retries}): {e}")
