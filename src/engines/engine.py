@@ -94,7 +94,14 @@ class Simulation:
                 continue
             system, user = build_seed_memory_prompt(agent)
             out = self.llm.chat_json(system, user)
-            for mem in out["memories"][:5]:
+            # Asked for {"memories": [...]}, but the model occasionally drops the
+            # wrapper and returns the bare array. Accept either shape rather than
+            # crashing a long init mid-run on one off-format response.
+            memories = out.get("memories", out) if isinstance(out, dict) else out
+            if not isinstance(memories, list):
+                raise ValueError(
+                    f"{agent.agent_id}: seed-memory response not a list of memories: {out!r}")
+            for mem in memories[:5]:
                 lesson = Lesson(
                     agent_id=agent.agent_id,
                     memory_text=mem["memory_text"],
