@@ -48,6 +48,11 @@ class RelevanceScorer:
         """LLM-as-judge: ask for the three relevance scores; clamp each to [0,1]."""
         system, user = build_relevance_prompt(memory_text)
         out = self.llm.chat_json(system, user, temperature=0.0)
+        # The judge is asked for a JSON object; if the model returns something
+        # else (e.g. a bare list), fall back to zero relevance rather than
+        # crashing on .get — a malformed judgement just means "not retrieved".
+        if not isinstance(out, dict):
+            out = {}
         return {
             "attitude": clamp(float(out.get("attitude_relevance", 0.0)), 0.0, 1.0),
             "norm": clamp(float(out.get("norm_relevance", 0.0)), 0.0, 1.0),

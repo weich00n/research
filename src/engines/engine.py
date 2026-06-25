@@ -113,6 +113,10 @@ class Simulation:
                 )
                 agent.add_lesson(lesson)
             self._log(f"{agent.agent_id}: {len(agent.seed_lessons)} seed memories")
+            # Checkpoint after every agent so a crash/stall during the long seed
+            # phase costs at most one agent (the whole world state is rewritten;
+            # current_timestep stays 0 = "seeds only, no week run yet").
+            self.save()
 
     # ── One timestep ───────────────────────────────────────────────────────
 

@@ -8,6 +8,21 @@ import itertools
 _id_counter = itertools.count(1)
 
 
+def reseed_id_counter(existing_tweets):
+    """Advance the tweet-id counter past the highest id already in use (resume safety).
+
+    Mirrors `lesson.reseed_id_counter`: loaded tweets keep their original ids, so
+    the new process's counter must skip past them to avoid id collisions.
+    """
+    global _id_counter
+    max_id = 0
+    for t in existing_tweets:
+        tid = getattr(t, "tweet_id", None)
+        if tid and tid[1:].isdigit():
+            max_id = max(max_id, int(tid[1:]))
+    _id_counter = itertools.count(max_id + 1)
+
+
 class Tweet:
     """A fertility-related social post by one agent.
 

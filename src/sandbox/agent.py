@@ -47,12 +47,14 @@ class Agent:
 
         # ── Layer 2: dynamic belief state ──────────────────────────────────
         self.belief_state = dict(profile.get("belief_state") or NEUTRAL_BELIEF_STATE)
-        self.belief_history = []  # [{"timestep": t, **belief_state}, ...]
+        # Round-trip the weekly trajectory + posts so a saved run can be resumed
+        # (absent on a fresh profile -> empty, as before).
+        self.belief_history = list(profile.get("belief_history", []))  # [{"timestep": t, ...}]
 
         # ── Layer 3: memory stream ─────────────────────────────────────────
         self.lessons = [Lesson.from_dict(m) for m in profile.get("memory_stream", [])]
 
-        self.tweets = []
+        self.tweets = [Tweet.from_dict(t) for t in profile.get("tweets", [])]
 
     # ── Memory stream ──────────────────────────────────────────────────────
 

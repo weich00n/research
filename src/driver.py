@@ -13,12 +13,15 @@ Defaults: agents from ../agents_final_100.json, network at
 """
 
 import argparse
+import json
 import os
 
 from engines.engine import CONDITIONS, Simulation
 from LLM_judge import RelevanceScorer
-from sandbox.agent import load_agents
+from sandbox.agent import Agent, load_agents
+from sandbox.lesson import reseed_id_counter as reseed_lesson_ids
 from sandbox.news import build_news_schedule
+from sandbox.tweet import reseed_id_counter as reseed_tweet_ids
 from utils.generate_utils import LLMClient
 from utils.network_utils import load_network
 
@@ -43,11 +46,34 @@ def main():
                         help="limit to first N agents (for cheap test runs)")
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--run-name", default=None)
+    parser.add_argument("--resume", action="store_true",
+                        help="continue outputs/<run_name>.json from its last checkpoint "
+                             "instead of starting fresh (skips already-finished agents)")
     args = parser.parse_args()
 
-    agents = load_agents(args.agents)
-    if args.num_agents:
-        agents = agents[: args.num_agents]
+    # Resolve the run name / checkpoint path the same way Simulation does, so
+    # --resume can find the file a previous run wrote.
+    run_name = args.run_name or f"run_{args.condition}"
+    run_path = os.path.join(args.output_dir, f"{run_name}.json")
+
+    # Resume rebuilds agents (with their seed memories, beliefs, history, tweets)
+    # from the last checkpoint; a fresh run loads pristine profiles. On resume the
+    # id counters are advanced past the loaded ids so new memories don't collide.
+    resume_state = None
+    if args.resume and os.path.exists(run_path):
+        with open(run_path, encoding="utf-8") as f:
+            resume_state = json.load(f)
+        agents = [Agent(p) for p in resume_state["agents"]]
+        reseed_lesson_ids([l for a in agents for l in a.lessons])
+        reseed_tweet_ids([t for a in agents for t in a.tweets])
+        print(f"Resuming '{run_name}' from {run_path}: {len(agents)} agents, "
+              f"completed through week {resume_state['current_timestep']}")
+    else:
+        if args.resume:
+            print(f"--resume set but no checkpoint at {run_path}; starting fresh")
+        agents = load_agents(args.agents)
+        if args.num_agents:
+            agents = agents[: args.num_agents]
     print(f"Loaded {len(agents)} agents")
 
     llm = LLMClient()
@@ -84,9 +110,19 @@ def main():
         scorer=scorer,
         news_schedule=news_schedule,
         output_dir=args.output_dir,
-        run_name=args.run_name,
+        run_name=run_name,
     )
-    sim.run(args.timesteps)
+
+    # Continue from the last completed week (0 for a fresh run). Seed init and
+    # finished agents are skipped inside the engine, so only outstanding work runs.
+    done_through = resume_state["current_timestep"] if resume_state else 0
+    sim.current_timestep = done_through
+    remaining = args.timesteps - done_through
+    if remaining <= 0:
+        print(f"Run already complete through week {done_through} "
+              f"(requested {args.timesteps} timesteps); nothing to do.")
+    else:
+        sim.run(remaining, start_timestep=done_through + 1)
     print(f"\nDone. Results: {sim.save()}")
 
 

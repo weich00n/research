@@ -19,6 +19,23 @@ TPB_CONSTRUCTS = ("attitude", "norm", "pbc")
 _id_counter = itertools.count(1)
 
 
+def reseed_id_counter(existing_lessons):
+    """Advance the memory-id counter past the highest id already in use.
+
+    On a resumed run, loaded lessons keep their original ids (`from_dict` passes
+    `memory_id` through), but this module-level counter restarts at 1 in the new
+    process. Call this after loading so freshly minted memories don't collide
+    with loaded ids — retrieval keys and de-dups by `memory_id`.
+    """
+    global _id_counter
+    max_id = 0
+    for l in existing_lessons:
+        mid = getattr(l, "memory_id", None)
+        if mid and mid[1:].isdigit():
+            max_id = max(max_id, int(mid[1:]))
+    _id_counter = itertools.count(max_id + 1)
+
+
 class Lesson:
     """One memory in an agent's memory stream (CLAUDE.md Layer 3).
 
