@@ -17,10 +17,10 @@ conventions of compare_initialisations.py (load-by-agent_id, UTF-8 console,
 CSV export).
 
 Run from src/:
-    python compare_runs.py
-    python compare_runs.py \
-        --runs ../outputs/run_C0.json ../outputs/run_C0_metallama.json \
-        --logs ../outputs/run_C0.log ../outputs/run_C0_metallama.log \
+    python validation/compare_runs.py
+    python validation/compare_runs.py \
+        --runs ../outputs/run_C0_Qwen.json ../outputs/run_C0_metallama.json \
+        --logs ../outputs/run_C0_Qwen.log ../outputs/run_C0_metallama.log \
         --labels qwen llama
 """
 
@@ -34,11 +34,15 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
+# this file lives in src/validation/; put src/ on the path so sandbox/utils
+# import the same way they do for driver.py (which is run from src/).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from sandbox.prompts import CONSTRUCT_PROMPTS
 from utils.generate_utils import EmbeddingClient
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "..", "outputs")
+OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
 CONSTRUCTS = list(CONSTRUCT_PROMPTS)  # ['attitude', 'norm', 'pbc']
 SAMPLE_AGENTS = ["agent_001", "agent_050", "agent_100"]  # for the grounding section
 LOG_TS_FMT = "%Y-%m-%d %H:%M:%S"

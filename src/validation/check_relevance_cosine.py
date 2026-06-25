@@ -13,9 +13,9 @@ Disagreement is AMBIGUOUS: cosine-to-construct-prompts is itself weak, so it is
 a triangulation check, not an arbiter. The multi-LLM judge-IRR remains primary.
 
 Read-only. Run from src/:
-    python check_relevance_cosine.py
-    python check_relevance_cosine.py \
-        --runs ../outputs/run_C0.json ../outputs/run_C0_metallama.json --labels qwen llama
+    python validation/check_relevance_cosine.py
+    python validation/check_relevance_cosine.py \
+        --runs ../outputs/run_C0_Qwen.json ../outputs/run_C0_metallama.json --labels qwen llama
 """
 
 import argparse
@@ -27,11 +27,15 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import cohen_kappa_score
 
+# this file lives in src/validation/; put src/ on the path so sandbox/utils
+# import the same way they do for driver.py (which is run from src/).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from sandbox.prompts import CONSTRUCT_PROMPTS
 from utils.generate_utils import EmbeddingClient
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "..", "outputs")
+OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
 CONSTRUCTS = list(CONSTRUCT_PROMPTS)  # ['attitude', 'norm', 'pbc']
 
 

@@ -6,9 +6,9 @@ differ. This script reports field-level differences, agreement statistics
 for the two inferred variables, and exports a per-agent comparison CSV
 to outputs/initialisation_comparison.csv for traceability.
 
-Usage:
-    python src/compare_initialisations.py
-    python src/compare_initialisations.py --nemotron a.json --llama b.json
+Usage (from repo root):
+    python src/validation/compare_initialisations.py
+    python src/validation/compare_initialisations.py --nemotron a.json --llama b.json
 """
 
 import argparse
