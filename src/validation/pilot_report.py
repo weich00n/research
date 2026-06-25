@@ -1,6 +1,6 @@
 """Compare prompt versions (v1 vs v2) on the pilot predictions.
 
-Loads every outputs/validation/preds_<model>_<version>.jsonl, restricts to
+Loads every outputs/validation/preds/<model>/preds_<model>_<version>.jsonl, restricts to
 personas rated under BOTH versions, and prints per-version agreement and
 distribution metrics so the user can decide whether v2 replaces v1.
 
@@ -28,7 +28,7 @@ PERSONAS_CSV = os.path.join(OUT_DIR, "validation_personas_500.csv")
 def load_preds(out_dir):
     """All prediction records, deduped (last line per persona wins), no errors."""
     rows = []
-    for path in sorted(glob.glob(os.path.join(out_dir, "preds_*_v*.jsonl"))):
+    for path in sorted(glob.glob(os.path.join(out_dir, "preds", "*", "preds_*_v*.jsonl"))):
         records = {}
         with open(path, encoding="utf-8") as f:
             for line in f:
@@ -135,7 +135,7 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     df = load_preds(OUT_DIR)
     if df.empty:
-        print("No versioned prediction files found in outputs/validation.")
+        print("No versioned prediction files found in outputs/validation/preds.")
         return
 
     personas = pd.read_csv(PERSONAS_CSV).set_index("persona_id")

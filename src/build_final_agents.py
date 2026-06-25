@@ -38,7 +38,7 @@ VAL = os.path.join(ROOT, "outputs", "validation")
 
 CONSENSUS_CSV = os.path.join(VAL, "consensus_labels.csv")
 PERSONAS_CSV = os.path.join(VAL, "validation_personas_500.csv")
-GPT4O_JSONL = os.path.join(VAL, "preds_gpt-4o-mini_v2.jsonl")
+GPT4O_JSONL = os.path.join(VAL, "preds", "gpt-4o-mini", "preds_gpt-4o-mini_v2.jsonl")
 OUT_JSON = os.path.join(ROOT, "agents_final_100.json")
 
 RANDOM_STATE = 42

@@ -1,12 +1,13 @@
 """Run one rater model over the validation personas (resumable).
 
-One JSONL output per model: outputs/validation/preds_<tag>.jsonl, one line
-per persona with both inferences. Safe to interrupt and re-run — completed
-personas are skipped, failed ones are re-attempted (the loader keeps the
-last line per persona_id).
+One JSONL output per model, grouped by file type then model:
+outputs/validation/preds/<model>/preds_<tag>.jsonl, one line per persona with
+both inferences (run logs sit alongside under outputs/validation/logs/<model>/).
+Safe to interrupt and re-run — completed personas are skipped, failed ones are
+re-attempted (the loader keeps the last line per persona_id).
 
 Prompt versions (see inference_prompts.PROMPT_SETS) are kept in separate
-files: preds_<tag>_<version>.jsonl. Default is v2.
+files: preds_<model>_<version>.jsonl. Default is v2.
 
 From src/:
 
@@ -103,10 +104,13 @@ def main():
     parser.add_argument("--out-dir", default=DEFAULT_OUT_DIR)
     args = parser.parse_args()
 
-    os.makedirs(args.out_dir, exist_ok=True)
     tag = f"{args.model}_{args.prompt_version}"
-    out_path = os.path.join(args.out_dir, f"preds_{tag}.jsonl")
-    setup_logger(os.path.join(args.out_dir, f"run_{tag}.log"))
+    preds_dir = os.path.join(args.out_dir, "preds", args.model)
+    logs_dir = os.path.join(args.out_dir, "logs", args.model)
+    os.makedirs(preds_dir, exist_ok=True)
+    os.makedirs(logs_dir, exist_ok=True)
+    out_path = os.path.join(preds_dir, f"preds_{tag}.jsonl")
+    setup_logger(os.path.join(logs_dir, f"run_{tag}.log"))
 
     cfg = MODELS[args.model]
     prompts = PROMPT_SETS[args.prompt_version]
