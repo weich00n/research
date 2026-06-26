@@ -71,7 +71,7 @@ def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STAT
             f"{agent.get_profile_str()}. You are joining a social network in "
             f"Singapore. You will be provided a list of people in the network, "
             f"where each person is described as 'ID. Gender\tAge\tRelationship\t"
-            f"Education\tOccupation\tIndustry\tArea\tPersona'. Which of these people will "
+            f"Education\tOccupation\tIndustry\tArea'. Which of these people will "
             f"you become friends with? Provide a list of *YOUR* friends in the "
             f"format ID, ID, ID, etc. Do not include any other text in your "
             f"response. Do not include any people who are not listed below."

@@ -107,16 +107,18 @@ class Agent:
     def get_profile_str(self):
         """Compact profile for social network generation (VacSim style).
 
-        Demographics plus the one-sentence persona; the long narrative fields
-        (hobbies, cultural background, career goals) are left out because all
-        199 other agents' profiles share one prompt during network generation.
-        The full profile for belief prompts is prompts.profile_to_str.
+        Demographics only (no narrative persona). The one-shot network-gen call
+        embeds all 99 other agents' profiles in a single prompt; the local Qwen
+        vLLM caps context at 6144 tokens, and with personas the 100-agent prompt
+        is ~9.9k tokens (the server 400s). Demographics-only is ~4.3k tokens and
+        fits — and matches VacSim, whose network profile string is also
+        demographics-only. The full profile for belief prompts is
+        prompts.profile_to_str.
         """
         return (f"Gender: {self.gender}\tAge: {self.age}\t"
                 f"Relationship: {self.relationship_status}\t"
                 f"Education: {self.education}\tOccupation: {self.occupation}\t"
-                f"Industry: {self.industry}\tArea: {self.planning_area}\t"
-                f"Persona: {self.general_persona}")
+                f"Industry: {self.industry}\tArea: {self.planning_area}")
 
     # ── Serialisation ──────────────────────────────────────────────────────
 
