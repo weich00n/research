@@ -9,7 +9,7 @@ From the src/ directory:
     python driver.py --condition C3 --timesteps 12
 
 Defaults: agents from ../agents_final_100.json, network at
-../outputs/social_network.json, results in ../outputs/.
+../outputs/networks/social_network.json, results in ../outputs/runs/.
 """
 
 import argparse
@@ -27,8 +27,8 @@ from utils.network_utils import load_network
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_AGENTS = os.path.join(HERE, "..", "agents_final_100.json")
-DEFAULT_OUTPUT_DIR = os.path.join(HERE, "..", "outputs")
-DEFAULT_NETWORK = os.path.join(DEFAULT_OUTPUT_DIR, "social_network.json")
+DEFAULT_OUTPUT_DIR = os.path.join(HERE, "..", "outputs", "runs")
+DEFAULT_NETWORK = os.path.join(HERE, "..", "outputs", "networks", "social_network.json")
 
 
 def main():
@@ -47,7 +47,7 @@ def main():
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--run-name", default=None)
     parser.add_argument("--resume", action="store_true",
-                        help="continue outputs/<run_name>.json from its last checkpoint "
+                        help="continue outputs/runs/<run_name>.json from its last checkpoint "
                              "instead of starting fresh (skips already-finished agents)")
     args = parser.parse_args()
 

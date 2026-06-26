@@ -5,4 +5,5 @@ history
 test.py
 outputs
 docs
+reports
 *.pyc

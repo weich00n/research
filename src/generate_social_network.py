@@ -30,7 +30,7 @@ logger = get_logger("network")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_AGENTS = os.path.join(HERE, "..", "agents_final_100.json")
-DEFAULT_OUTPUT = os.path.join(HERE, "..", "outputs", "social_network.json")
+DEFAULT_OUTPUT = os.path.join(HERE, "..", "outputs", "networks", "social_network.json")
 
 
 def _parse_friend_indices(response, self_idx, num_agents):

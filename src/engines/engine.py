@@ -52,8 +52,8 @@ class Simulation:
     """
 
     def __init__(self, agents, network, condition, llm, scorer,
-                 news_schedule=None, output_dir="outputs", run_name=None,
-                 verbose=True):
+                 news_schedule=None, output_dir=os.path.join("outputs", "runs"),
+                 run_name=None, verbose=True):
         if condition not in CONDITIONS:
             raise ValueError(f"condition must be one of {list(CONDITIONS)}")
         self.agents = agents

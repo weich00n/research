@@ -15,7 +15,7 @@ a triangulation check, not an arbiter. The multi-LLM judge-IRR remains primary.
 Read-only. Run from src/:
     python validation/check_relevance_cosine.py
     python validation/check_relevance_cosine.py \
-        --runs ../outputs/run_C0_Qwen.json ../outputs/run_C0_metallama.json --labels qwen llama
+        --runs ../outputs/runs/run_C0_Qwen.json ../outputs/runs/run_C0_metallama.json --labels qwen llama
 """
 
 import argparse
@@ -36,6 +36,8 @@ from utils.generate_utils import EmbeddingClient
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
+RUNS = os.path.join(OUT, "runs")
+ANALYSIS = os.path.join(OUT, "analysis")
 CONSTRUCTS = list(CONSTRUCT_PROMPTS)  # ['attitude', 'norm', 'pbc']
 
 
@@ -89,10 +91,10 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--runs", nargs="+", default=[os.path.join(OUT, "run_C0.json")])
+    ap.add_argument("--runs", nargs="+", default=[os.path.join(RUNS, "run_C0.json")])
     ap.add_argument("--labels", nargs="+", default=None)
-    ap.add_argument("--report", default=os.path.join(OUT, "relevance_cosine_check.md"))
-    ap.add_argument("--csv", default=os.path.join(OUT, "relevance_cosine_per_memory.csv"))
+    ap.add_argument("--report", default=os.path.join(ANALYSIS, "relevance_cosine_check.md"))
+    ap.add_argument("--csv", default=os.path.join(ANALYSIS, "relevance_cosine_per_memory.csv"))
     args = ap.parse_args()
     labels = args.labels or [os.path.basename(r).replace("run_", "").replace(".json", "")
                              for r in args.runs]

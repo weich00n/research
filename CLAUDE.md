@@ -329,7 +329,7 @@ Before interpreting simulation results, verify:
 | `src/sandbox/tweet.py` | Fertility-related social post (visible to followers at t+1) |
 | `src/utils/generate_utils.py` | Configurable LLM client (.env: OpenRouter or local endpoint) |
 | `src/utils/network_utils.py` | Social network JSON save/load |
-| `outputs/` | Simulation results (`run_<condition>.json`) and `social_network.json` |
+| `outputs/` | Generated artifacts, grouped by type: `runs/` (simulation `<run_name>.json` + `.log`, with throwaway smoke runs under `runs/smoke/`), `networks/` (`social_network_*.json` + `.log`), `analysis/` (comparison/inspection reports + CSV/PNG), `validation/` (rater preds/logs + consensus) |
 
 **Final agent pool (`agents_final_100.json`).** After the multi-LLM validation
 study, the simulation input is built by `src/build_final_agents.py` (not the
@@ -343,8 +343,9 @@ from persona text. `financial_security_score` = the unanimous consensus value
 `financial_security_reasoning` = gpt-4o-mini's text. Each agent additionally
 carries provenance fields ignored by `sandbox.agent.Agent`: `source_persona_id`,
 `uuid`, `fin_consensus_n_raters`, `fin_consensus_spread`. The `agents_final_100`
-social network must be regenerated (`generate_social_network.py`) before C1/C3 —
-the old `social_network.json` was built for the 200 v1 agents.
+social network must be regenerated (`generate_social_network.py`, output under
+`outputs/networks/`) before C1/C3 — the old `social_network.json` was built for
+the 200 v1 agents.
 ---
 
 ## References (Short Form)

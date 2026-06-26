@@ -19,8 +19,8 @@ CSV export).
 Run from src/:
     python validation/compare_runs.py
     python validation/compare_runs.py \
-        --runs ../outputs/run_C0_Qwen.json ../outputs/run_C0_metallama.json \
-        --logs ../outputs/run_C0_Qwen.log ../outputs/run_C0_metallama.log \
+        --runs ../outputs/runs/run_C0_Qwen.json ../outputs/runs/run_C0_metallama.json \
+        --logs ../outputs/runs/run_C0_Qwen.log ../outputs/runs/run_C0_metallama.log \
         --labels qwen llama
 """
 
@@ -43,6 +43,8 @@ from utils.generate_utils import EmbeddingClient
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
+RUNS = os.path.join(OUT, "runs")
+ANALYSIS = os.path.join(OUT, "analysis")
 CONSTRUCTS = list(CONSTRUCT_PROMPTS)  # ['attitude', 'norm', 'pbc']
 SAMPLE_AGENTS = ["agent_001", "agent_050", "agent_100"]  # for the grounding section
 LOG_TS_FMT = "%Y-%m-%d %H:%M:%S"
@@ -220,14 +222,14 @@ def main():
 
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--runs", nargs=2,
-                    default=[os.path.join(OUT, "run_C0.json"),
-                             os.path.join(OUT, "run_C0_metallama.json")])
+                    default=[os.path.join(RUNS, "run_C0.json"),
+                             os.path.join(RUNS, "run_C0_metallama.json")])
     ap.add_argument("--logs", nargs=2,
-                    default=[os.path.join(OUT, "run_C0.log"),
-                             os.path.join(OUT, "run_C0_metallama.log")])
+                    default=[os.path.join(RUNS, "run_C0.log"),
+                             os.path.join(RUNS, "run_C0_metallama.log")])
     ap.add_argument("--labels", nargs=2, default=["qwen", "llama"])
-    ap.add_argument("--report", default=os.path.join(OUT, "run_comparison_qwen_vs_llama.md"))
-    ap.add_argument("--csv", default=os.path.join(OUT, "run_comparison_per_agent.csv"))
+    ap.add_argument("--report", default=os.path.join(ANALYSIS, "run_comparison_qwen_vs_llama.md"))
+    ap.add_argument("--csv", default=os.path.join(ANALYSIS, "run_comparison_per_agent.csv"))
     args = ap.parse_args()
     la, lb = args.labels
 

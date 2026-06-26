@@ -4,7 +4,7 @@ The two JSON files share an identical schema; only the LLM-inferred fields
 (financial_security_score/reasoning, relationship_status/reasoning) can
 differ. This script reports field-level differences, agreement statistics
 for the two inferred variables, and exports a per-agent comparison CSV
-to outputs/initialisation_comparison.csv for traceability.
+to outputs/analysis/initialisation_comparison.csv for traceability.
 
 Usage (from repo root):
     python src/validation/compare_initialisations.py
@@ -144,7 +144,7 @@ def main():
                         help="Nemotron-initialised agents JSON")
     parser.add_argument("--llama", default="agents_llama_initialised.json",
                         help="Llama-initialised agents JSON")
-    parser.add_argument("--out", default="outputs/initialisation_comparison.csv",
+    parser.add_argument("--out", default="outputs/analysis/initialisation_comparison.csv",
                         help="Per-agent comparison CSV")
     args = parser.parse_args()
 
