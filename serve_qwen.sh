@@ -38,7 +38,8 @@ for g in $GPUS; do
   echo "  -> GPU $g  ->  http://localhost:$port/v1"
   CUDA_VISIBLE_DEVICES="$g" python -m vllm.entrypoints.openai.api_server \
     --model "$MODEL" --max-model-len "$MAX_MODEL_LEN" \
-    --tensor-parallel-size 1 --port "$port" &
+    --tensor-parallel-size 1 --port "$port" \
+    --disable-frontend-multiprocessing &
 done
 
 echo "Launched $i replica(s). Waiting for them to come up..."
