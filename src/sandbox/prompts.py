@@ -95,11 +95,50 @@ def build_relevance_prompt(memory_text):
     return TPB_RELEVANCE_SYSTEM, user
 
 
-# Construct prompts reused by the cosine-similarity relevance scorer.
+# Construct prompts reused by the LLM-as-judge relevance scorer (they mirror the
+# canonical TPB construct definitions in CLAUDE.md — do not broaden these).
 CONSTRUCT_PROMPTS = {
     "attitude": ATTITUDE_PROMPT,
     "norm": NORM_PROMPT,
     "pbc": PBC_PROMPT,
+}
+
+# Recall-broadened anchors used ONLY by the cosine / hybrid-prefilter scorer
+# (RelevanceScorer._score_cosine). Decoupled from CONSTRUCT_PROMPTS on purpose: the
+# cosine stage needs recall, not the exact definition, so these enumerate the many
+# concrete ways each construct surfaces in first-person memories — pulling concretely
+# phrased memories closer to the anchor in embedding space. `subjective_norm` is
+# especially enriched because it is relational and cosine underranks it. Broadening
+# here is safe: in hybrid mode cosine only shortlists candidates; the LLM judge
+# (which still uses the faithful CONSTRUCT_PROMPTS) supplies the final precision.
+CONSTRUCT_EMBED_PROMPTS = {
+    "attitude": (
+        "Personal feelings and evaluations about having a child in the next few "
+        "years: whether it would be fulfilling, joyful, and meaningful or a burden "
+        "and a sacrifice; the emotional rewards and the costs; trade-offs with "
+        "career, freedom, lifestyle, finances, and personal goals; hopes, worries, "
+        "excitement, reluctance, or ambivalence about becoming a parent; whether "
+        "raising a child feels worth it."
+    ),
+    "norm": (
+        "Social expectations and pressure about marriage and having children coming "
+        "from important people in one's life: parents and in-laws wanting "
+        "grandchildren or asking when you will have kids; a spouse's or partner's "
+        "wishes; what friends, siblings, relatives, colleagues, and peers expect or "
+        "think you should do; friends, siblings, and peers who are themselves getting "
+        "married, pregnant, or having babies; feeling that having children is normal, "
+        "expected, or the done thing in one's family, community, or generation; "
+        "religious, cultural, or government messaging that encourages marriage and "
+        "parenthood; comparing oneself to other people's family choices."
+    ),
+    "pbc": (
+        "Sense of being able to afford, manage, and cope with having and raising a "
+        "child: money, income, savings, cost of living; housing and getting a flat; "
+        "childcare availability and cost; job security, career stability, work-life "
+        "balance, flexible work arrangements, and parental leave; time, energy, "
+        "health, and support from family, a partner, or a helper; practical barriers "
+        "or supports that make having a child feel easier or harder to handle."
+    ),
 }
 
 
@@ -258,6 +297,98 @@ def build_intention_update_prompt(agent, retrieved_lessons, new_messages, curren
         "Output the updated fertility_intention distribution as JSON.",
     ]
     return INTENTION_UPDATE_SYSTEM, "\n".join(parts)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 4b. Baseline belief initialisation (t=0) — DECOUPLED like the weekly update.
+#     Run ONCE, before any week, over the seed memories only. Unlike the weekly
+#     update these prompts *establish* the starting scores from scratch: there is
+#     no "current 3/3/3" anchor and no "shift gradually" instruction, so the LLM
+#     is free to place each agent across the full 1-5 range based on their profile
+#     and seeds. They produce a grounded, differentiated baseline to measure
+#     policy/social effects *from*. Scores only — no reflection memory is written,
+#     so the t=0 memory stream stays the pure seed memories.
+# ──────────────────────────────────────────────────────────────────────────
+
+BASELINE_TPB_SYSTEM = """You are establishing the INITIAL fertility-related TPB
+beliefs of a Singapore resident, using the Theory of Planned Behaviour (TPB). Based
+on their profile and their stable background (seed) memories, output their starting
+TPB scores.
+
+Definitions (all scores on a 1-5 scale; 3 is the neutral midpoint of the scale):
+- attitude_score: how positively or negatively they evaluate having a child
+  (1 = very negative, 3 = neutral, 5 = very positive).
+- subjective_norm_score: how much social pressure / perceived normalcy they feel
+  from important referents about having children (1 = none, 5 = very strong).
+- pbc_score: how capable they feel of having and raising a child given their
+  resources and constraints (1 = not capable at all, 5 = fully capable).
+
+Set each score to reflect what THIS person's profile and background beliefs
+genuinely imply. Use the FULL 1-5 range where warranted — do NOT default everyone to
+the middle. Two people in clearly different circumstances should receive clearly
+different scores.
+
+Respond with JSON only:
+{"attitude_score": 2.4, "subjective_norm_score": 3.6, "pbc_score": 2.0}"""
+
+
+BASELINE_INTENTION_SYSTEM = """You are establishing the INITIAL fertility intention
+of a Singapore resident. Based on their profile and their stable background (seed)
+memories, output their starting fertility intention.
+
+fertility_intention is a probability distribution over 5 ordinal intention levels
+[p1, p2, p3, p4, p5] that sums to 1.0, where
+1 = no child intention, 2 = weak/unlikely, 3 = uncertain, 4 = likely,
+5 = strong intention.
+
+Judge their intention holistically from their overall situation. Use the FULL range
+where warranted — do NOT default to a flat or uniformly uncertain distribution
+unless that genuinely fits this person. Briefly explain your reasoning in one
+sentence.
+
+Respond with JSON only:
+{"reasoning": "...", "fertility_intention": [0.3, 0.3, 0.2, 0.1, 0.1]}"""
+
+
+def build_baseline_tpb_prompt(agent, retrieved_lessons):
+    """(system, user) prompt for the t=0 baseline TPB scores (no intention).
+
+    Shows the profile + seed memories but NO current-score anchor and NO new
+    messages — the baseline is established from the seeds alone.
+    """
+    parts = [
+        "Profile of the person:",
+        profile_to_str(agent),
+        "",
+        "This is the BASELINE assessment, before the simulation begins "
+        "(no policy or social input yet).",
+        "",
+        *_belief_context_lines(retrieved_lessons, []),
+        "",
+        "Output the baseline TPB scores as JSON.",
+    ]
+    return BASELINE_TPB_SYSTEM, "\n".join(parts)
+
+
+def build_baseline_intention_prompt(agent, retrieved_lessons):
+    """(system, user) prompt for the t=0 baseline fertility-intention distribution.
+
+    Like the baseline TPB prompt: profile + seed memories, no previous-intention
+    anchor, no new messages, no numeric TPB scores (mediation isolation holds at
+    baseline too).
+    """
+    parts = [
+        "Profile of the person:",
+        profile_to_str(agent),
+        "",
+        "This is the BASELINE assessment, before the simulation begins "
+        "(no policy or social input yet).",
+        "",
+        *_belief_context_lines(retrieved_lessons, []),
+        "",
+        "Output the baseline fertility_intention distribution as JSON.",
+    ]
+    return BASELINE_INTENTION_SYSTEM, "\n".join(parts)
 
 
 # ──────────────────────────────────────────────────────────────────────────

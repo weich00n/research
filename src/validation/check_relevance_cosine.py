@@ -31,14 +31,15 @@ from sklearn.metrics import cohen_kappa_score
 # import the same way they do for driver.py (which is run from src/).
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sandbox.prompts import CONSTRUCT_PROMPTS
+from sandbox.prompts import CONSTRUCT_EMBED_PROMPTS
 from utils.generate_utils import EmbeddingClient
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
 RUNS = os.path.join(OUT, "runs")
 ANALYSIS = os.path.join(OUT, "analysis")
-CONSTRUCTS = list(CONSTRUCT_PROMPTS)  # ['attitude', 'norm', 'pbc']
+# Mirror the cosine/hybrid scorer: use the recall-broadened embed anchors.
+CONSTRUCTS = list(CONSTRUCT_EMBED_PROMPTS)  # ['attitude', 'norm', 'pbc']
 
 
 def collect_memories(path):
@@ -100,7 +101,7 @@ def main():
                              for r in args.runs]
 
     embed = EmbeddingClient()
-    cvecs = embed.embed([CONSTRUCT_PROMPTS[k] for k in CONSTRUCTS])
+    cvecs = embed.embed([CONSTRUCT_EMBED_PROMPTS[k] for k in CONSTRUCTS])
 
     out, per_memory = [], []
     p = out.append
