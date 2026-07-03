@@ -18,11 +18,15 @@ for each agent:
 import json
 import logging
 import os
+import random
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from sandbox.lesson import Lesson
+from sandbox.lesson import Lesson, retrieve_memories
 from utils.logging_utils import setup_logger
 from sandbox.prompts import (
+    build_baseline_intention_prompt,
+    build_baseline_tpb_prompt,
     build_intention_update_prompt,
     build_perception_prompt,
     build_seed_memory_prompt,
@@ -53,7 +57,7 @@ class Simulation:
 
     def __init__(self, agents, network, condition, llm, scorer,
                  news_schedule=None, output_dir=os.path.join("outputs", "runs"),
-                 run_name=None, verbose=True):
+                 run_name=None, verbose=True, concurrency=32, rerank_top_k=12):
         if condition not in CONDITIONS:
             raise ValueError(f"condition must be one of {list(CONDITIONS)}")
         self.agents = agents
@@ -62,10 +66,17 @@ class Simulation:
         self.condition = condition
         self.llm = llm
         self.scorer = scorer  # LLM_judge.RelevanceScorer
+        # hybrid-mode cosine shortlist size per construct (passed to scorer.rerank)
+        self.rerank_top_k = rerank_top_k
         self.news_schedule = news_schedule or {}
         self.output_dir = output_dir
         self.run_name = run_name or f"run_{condition}"
         self.verbose = verbose
+        # How many agents' weeks run concurrently. Each agent's LLM calls are
+        # independent across agents (only its own state is mutated), so the
+        # weekly loop fans out over a thread pool; vLLM's continuous batching
+        # turns these concurrent requests into GPU throughput.
+        self.concurrency = concurrency
         self.current_timestep = 0
 
         # console shows progress; <run_name>.log also captures DEBUG detail
@@ -102,6 +113,7 @@ class Simulation:
                 raise ValueError(
                     f"{agent.agent_id}: seed-memory response not a list of memories: {out!r}")
             for mem in memories[:5]:
+                rel, cos = self.scorer.creation_scores(mem["memory_text"])
                 lesson = Lesson(
                     agent_id=agent.agent_id,
                     memory_text=mem["memory_text"],
@@ -109,7 +121,8 @@ class Simulation:
                     source_type="profile_seed",
                     importance=mem.get("importance", 0.5),
                     memory_class="seed",
-                    relevance=self.scorer.score(mem["memory_text"]),
+                    relevance=rel,
+                    cosine_relevance=cos,
                 )
                 agent.add_lesson(lesson)
             self._log(f"{agent.agent_id}: {len(agent.seed_lessons)} seed memories")
@@ -118,14 +131,93 @@ class Simulation:
             # current_timestep stays 0 = "seeds only, no week run yet").
             self.save()
 
+    def _run_agent_baseline(self, agent):
+        """Establish one agent's t=0 belief state from its seed memories.
+
+        COMPUTE then COMMIT, like `_run_agent_week`: the two LLM calls run first,
+        and the agent's state is mutated only afterwards, so a failure leaves the
+        agent untouched and retriable (idempotent). Deterministic (temperature 0)
+        so the baseline is reproducible. Writes scores only — no reflection memory
+        and no tweet, so the t=0 memory stream stays the pure seed memories.
+        """
+        # Only seed memories exist at t=0, so retrieval returns the <=5 seeds.
+        retrieved, _ = retrieve_memories(agent.lessons, 0)
+        sys_t, usr_t = build_baseline_tpb_prompt(agent, retrieved)
+        tpb_out = self._chat_json(sys_t, usr_t, temperature=0.0)
+        sys_i, usr_i = build_baseline_intention_prompt(agent, retrieved)
+        int_out = self._chat_json(sys_i, usr_i, temperature=0.0)
+
+        # ── COMMIT (no LLM calls below) ─────────────────────────────────────
+        agent.update_belief_state(
+            tpb_out["attitude_score"],
+            tpb_out["subjective_norm_score"],
+            tpb_out["pbc_score"],
+            int_out["fertility_intention"],
+            timestep=0,
+        )
+        self._log(f"baseline {agent.agent_id}: "
+                  f"att={agent.belief_state['attitude_score']:.1f} "
+                  f"norm={agent.belief_state['subjective_norm_score']:.1f} "
+                  f"pbc={agent.belief_state['pbc_score']:.1f} "
+                  f"intent={agent.belief_state['fertility_intention_dist']}")
+
+    def initialise_baseline(self):
+        """Set every fresh agent's grounded t=0 belief state from its seed memories.
+
+        Idempotent: agents that already have a belief_history (resumed, mid-run, or
+        already baselined) are skipped, so this is a cheap no-op when a pre-seeded
+        agent file is loaded. Fans the fresh agents out over the thread pool with
+        the same initial-pass + up-to-2-retry structure as `step()`. Does not save;
+        the caller (`run()` / `--init-only`) persists the result.
+        """
+        pending = [a for a in self.agents if not a.belief_history]
+        if not pending:
+            return
+        self._log(f"Establishing t=0 baseline for {len(pending)} agents")
+        for attempt in range(3):
+            failed = []
+            with ThreadPoolExecutor(max_workers=self.concurrency) as pool:
+                futures = {pool.submit(self._run_agent_baseline, a): a for a in pending}
+                for fut in as_completed(futures):
+                    agent = futures[fut]
+                    try:
+                        fut.result()
+                    except Exception as e:
+                        self.logger.warning(f"baseline {agent.agent_id}: failed: {e}")
+                        failed.append(agent)
+            pending = failed
+            if not pending:
+                break
+            self.logger.warning(f"baseline: {len(pending)} agents failed on attempt "
+                                f"{attempt + 1}, retrying: {[a.agent_id for a in pending]}")
+        if pending:
+            raise RuntimeError(
+                f"baseline: {len(pending)} agents still failing after retries "
+                f"({[a.agent_id for a in pending]})")
+
     # ── One timestep ───────────────────────────────────────────────────────
 
-    def _perceive(self, agent, message_text, message_kind, source_type,
-                  timestep, source_agent_id=None):
-        """Steps 3+5: turn an incoming message into a relevance-scored memory."""
+    def _chat_json(self, system, user, temperature=None):
+        """chat_json against a randomly-picked endpoint (spreads load when several
+        local vLLM servers are configured via LOCAL_LLM_URLS; a no-op for one URL).
+
+        `temperature=None` leaves the client's default (weekly calls); the baseline
+        pass passes 0.0 for deterministic, reproducible initialisation.
+        """
+        url = random.choice(self.llm.urls) if len(self.llm.urls) > 1 else None
+        return self.llm.chat_json(system, user, url=url, temperature=temperature)
+
+    def _build_perceived(self, agent, message_text, message_kind, source_type,
+                         timestep, source_agent_id=None):
+        """Steps 3+5: turn an incoming message into a relevance-scored memory.
+
+        Builds (but does NOT attach) the Lesson, so the caller can defer all
+        state mutation until every LLM call in the week has succeeded.
+        """
         system, user = build_perception_prompt(agent, message_text, message_kind)
-        out = self.llm.chat_json(system, user)
-        lesson = Lesson(
+        out = self._chat_json(system, user)
+        rel, cos = self.scorer.creation_scores(out["memory_text"])
+        return Lesson(
             agent_id=agent.agent_id,
             memory_text=out["memory_text"],
             created_timestep=timestep,
@@ -133,96 +225,158 @@ class Simulation:
             importance=out.get("importance", 0.5),
             memory_class="simulation",
             source_agent_id=source_agent_id,
-            relevance=self.scorer.score(out["memory_text"]),
+            relevance=rel,
+            cosine_relevance=cos,
         )
-        agent.add_lesson(lesson)
-        return lesson
+
+    def _run_agent_week(self, agent, timestep, news_items):
+        """Run one CLAUDE.md week (steps 1-8) for a single agent.
+
+        COMPUTE then COMMIT: every LLM call runs first, building local objects;
+        the agent's own state is mutated only at the very end. So if any call
+        raises, nothing was committed and the agent can be retried cleanly
+        (idempotent) — no duplicate memories, no rollback.
+
+        Safe to run concurrently across agents: it mutates only `agent`, reads
+        other agents' tweets read-only (they were posted at t-1), and the Lesson/
+        Tweet id counters are atomic under the GIL.
+        """
+        _, social_on = CONDITIONS[self.condition]
+        new_lessons = []   # perceived memories, attached on commit
+        new_messages = []
+
+        # 1. policy news
+        for news in news_items:
+            new_lessons.append(
+                self._build_perceived(agent, news.text, "news report", "policy_news", timestep))
+            new_messages.append(f"[policy news] {news.text}")
+
+        # 2. social posts from followed agents, posted at t-1
+        if social_on:
+            for followed_id in self.network.get(agent.agent_id, []):
+                followed = self.agents_by_id[followed_id]
+                for tweet in followed.tweets:
+                    if tweet.created_timestep == timestep - 1:
+                        new_lessons.append(self._build_perceived(
+                            agent, tweet.text, "social media post", "social_post",
+                            timestep, source_agent_id=followed_id))
+                        new_messages.append(f"[post by a friend] {tweet.text}")
+
+        # 4-6. retrieval over existing + this week's freshly-perceived memories.
+        # In hybrid mode, rerank() first cosine-shortlists candidates and LLM-judges
+        # them (filling lesson.relevance, cached); a no-op in llm/cosine modes.
+        # (On a retried agent this re-runs; rerank is idempotent via its cache and
+        # retrieval may re-append to retrieval_history — analytics-only, harmless.)
+        all_lessons = agent.lessons + new_lessons
+        self.scorer.rerank(all_lessons, top_k=self.rerank_top_k)
+        retrieved, construct_map = retrieve_memories(all_lessons, timestep)
+
+        # 7a. TPB update (attitude/norm/pbc + reflection) — intention NOT here.
+        sys_t, usr_t = build_tpb_update_prompt(agent, retrieved, new_messages, timestep)
+        tpb_out = self._chat_json(sys_t, usr_t)
+        # 7b. Fertility intention — generated independently, WITHOUT seeing the
+        #     numeric TPB scores, so the TPB->intention link is measured
+        #     (mediation), not instructed. Reads the agent's *previous* state,
+        #     which is still intact because commit happens below.
+        sys_i, usr_i = build_intention_update_prompt(agent, retrieved, new_messages, timestep)
+        int_out = self._chat_json(sys_i, usr_i)
+
+        reflection_text = tpb_out.get("reflection_memory") or ""
+        reflection_lesson = None
+        if reflection_text:
+            rel, cos = self.scorer.creation_scores(reflection_text)
+            reflection_lesson = Lesson(
+                agent_id=agent.agent_id,
+                memory_text=reflection_text,
+                created_timestep=timestep,
+                source_type="reflection",
+                importance=REFLECTION_IMPORTANCE,
+                memory_class="simulation",
+                relevance=rel,
+                cosine_relevance=cos,
+            )
+
+        # 8. optional social post (visible to followers at t+1)
+        tweet_text = None
+        if social_on:
+            system, user = build_tweet_prompt(agent, reflection_text, timestep)
+            tweet_out = self._chat_json(system, user)
+            if tweet_out.get("post") and tweet_out.get("text"):
+                tweet_text = tweet_out["text"]
+
+        # ── COMMIT (no LLM calls below — cannot fail, so state stays consistent) ─
+        for lesson in new_lessons:
+            agent.add_lesson(lesson)
+        for lesson in retrieved:
+            lesson.used_in_update = True
+        agent.update_belief_state(
+            tpb_out["attitude_score"],
+            tpb_out["subjective_norm_score"],
+            tpb_out["pbc_score"],
+            int_out["fertility_intention"],
+            timestep,
+        )
+        if reflection_lesson:
+            agent.add_lesson(reflection_lesson)
+        if tweet_text:
+            agent.post_tweet(tweet_text, timestep)
+
+        self.logger.debug(f"t={timestep} {agent.agent_id}: read {len(new_messages)} "
+                          f"messages, retrieved {len(retrieved)} memories {construct_map}")
+        self._log(f"t={timestep} {agent.agent_id}: "
+                  f"att={agent.belief_state['attitude_score']:.1f} "
+                  f"norm={agent.belief_state['subjective_norm_score']:.1f} "
+                  f"pbc={agent.belief_state['pbc_score']:.1f}")
+
+    def _run_week_batch(self, agents, timestep, news_items):
+        """Run one week for each agent concurrently; return the agents that failed."""
+        failed = []
+        with ThreadPoolExecutor(max_workers=self.concurrency) as pool:
+            futures = {pool.submit(self._run_agent_week, a, timestep, news_items): a
+                       for a in agents}
+            for fut in as_completed(futures):
+                agent = futures[fut]
+                try:
+                    fut.result()
+                except Exception as e:
+                    self.logger.warning(f"t={timestep} {agent.agent_id}: week failed: {e}")
+                    failed.append(agent)
+        return failed
 
     def step(self, timestep):
         """Run one simulation week for every agent (CLAUDE.md steps 1-9).
 
-        Per agent: perceive policy news (1) and friends' t-1 posts (2) into
-        memories, retrieve the most relevant ones (4-6), ask the LLM for the new
-        TPB scores + reflection (7a) and — in a separate call that never sees
-        those scores — the new fertility-intention distribution (7b), and
-        optionally post a tweet (8). The whole world state is saved once at the
-        end of the week (9).
+        Agents are processed concurrently (`concurrency` at a time). Each agent
+        perceives policy news (1) and friends' t-1 posts (2), retrieves the most
+        relevant memories (4-6), gets new TPB scores + reflection (7a) and — in a
+        separate call that never sees those scores — its fertility intention (7b),
+        and may post a tweet (8). Agents whose week raises (after the client's own
+        retries) are retried on their own; if any still fail the week is aborted
+        with NO partial save, so --resume restarts it cleanly. The whole world
+        state is saved once at the end of the week (9).
         """
         self.current_timestep = timestep
         step_start = time.time()
-        policy_on, social_on = CONDITIONS[self.condition]
+        policy_on, _ = CONDITIONS[self.condition]
         news_items = self.news_schedule.get(timestep, []) if policy_on else []
         if news_items:
             self.logger.debug(f"t={timestep} news: "
                               f"{[n.policy.name for n in news_items]}")
 
-        for agent in self.agents:
-            new_messages = []
-
-            # 1. policy news
-            for news in news_items:
-                self._perceive(agent, news.text, "news report", "policy_news", timestep)
-                new_messages.append(f"[policy news] {news.text}")
-
-            # 2. social posts from followed agents, posted at t-1
-            if social_on:
-                for followed_id in self.network.get(agent.agent_id, []):
-                    followed = self.agents_by_id[followed_id]
-                    for tweet in followed.tweets:
-                        if tweet.created_timestep == timestep - 1:
-                            self._perceive(agent, tweet.text, "social media post",
-                                           "social_post", timestep,
-                                           source_agent_id=followed_id)
-                            new_messages.append(f"[post by a friend] {tweet.text}")
-
-            # 4-6. retrieval
-            retrieved, construct_map = agent.retrieve(timestep)
-            self.logger.debug(f"t={timestep} {agent.agent_id}: read "
-                              f"{len(new_messages)} messages, retrieved "
-                              f"{len(retrieved)} memories {construct_map}")
-
-            # 7a. TPB update (attitude/norm/pbc + reflection) — intention NOT
-            #     generated here.
-            sys_t, usr_t = build_tpb_update_prompt(agent, retrieved, new_messages, timestep)
-            tpb_out = self.llm.chat_json(sys_t, usr_t)
-            # 7b. Fertility intention — generated independently, WITHOUT seeing the
-            #     numeric TPB scores, so the TPB->intention link is measured
-            #     (mediation), not instructed.
-            sys_i, usr_i = build_intention_update_prompt(agent, retrieved, new_messages, timestep)
-            int_out = self.llm.chat_json(sys_i, usr_i)
-            agent.update_belief_state(
-                tpb_out["attitude_score"],
-                tpb_out["subjective_norm_score"],
-                tpb_out["pbc_score"],
-                int_out["fertility_intention"],
-                timestep,
-            )
-            for lesson in retrieved:
-                lesson.used_in_update = True
-
-            reflection_text = tpb_out.get("reflection_memory") or ""
-            if reflection_text:
-                agent.add_lesson(Lesson(
-                    agent_id=agent.agent_id,
-                    memory_text=reflection_text,
-                    created_timestep=timestep,
-                    source_type="reflection",
-                    importance=REFLECTION_IMPORTANCE,
-                    memory_class="simulation",
-                    relevance=self.scorer.score(reflection_text),
-                ))
-
-            # 8. optional social post (visible to followers at t+1)
-            if social_on:
-                system, user = build_tweet_prompt(agent, reflection_text, timestep)
-                tweet_out = self.llm.chat_json(system, user)
-                if tweet_out.get("post") and tweet_out.get("text"):
-                    agent.post_tweet(tweet_out["text"], timestep)
-
-            self._log(f"t={timestep} {agent.agent_id}: "
-                      f"att={agent.belief_state['attitude_score']:.1f} "
-                      f"norm={agent.belief_state['subjective_norm_score']:.1f} "
-                      f"pbc={agent.belief_state['pbc_score']:.1f}")
+        # Initial pass + up to 2 retries of just the stragglers.
+        pending = list(self.agents)
+        for attempt in range(3):
+            pending = self._run_week_batch(pending, timestep, news_items)
+            if not pending:
+                break
+            self.logger.warning(f"t={timestep}: {len(pending)} agents failed on "
+                                f"attempt {attempt + 1}, retrying: "
+                                f"{[a.agent_id for a in pending]}")
+        if pending:
+            raise RuntimeError(
+                f"t={timestep}: {len(pending)} agents still failing after retries "
+                f"({[a.agent_id for a in pending]}); aborting week (no save) so "
+                f"--resume restarts it from the previous checkpoint.")
 
         # 9. save after every timestep so long runs are resumable/inspectable
         path = self.save()
@@ -236,6 +390,10 @@ class Simulation:
         if not all(a.seed_lessons for a in self.agents):
             self.initialise_seed_memories()
             self.save()
+        # t=0 grounded baseline from the seeds (idempotent: a no-op when the agents
+        # were loaded pre-baselined from agents_final_100_seeded.json).
+        self.initialise_baseline()
+        self.save()
         for t in range(start_timestep, start_timestep + num_timesteps):
             self._log(f"\n===== Week {t} ({self.condition}) =====")
             self.step(t)

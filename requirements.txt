@@ -1,0 +1,21 @@
+# Fertility ABM (FARK-Sim) — Python deps for running the simulation + analysis.
+# Python 3.10+ recommended.
+
+# --- Simulation runtime (needed to run driver.py) ---
+requests
+python-dotenv
+sentence-transformers      # cosine / hybrid relevance (all-MiniLM-L6-v2)
+numpy
+
+# --- Analysis / validation scripts ---
+pandas
+scikit-learn
+
+# --- Data pipeline (only for rebuilding agents/personas/networks; optional) ---
+datasets
+matplotlib
+
+# --- LLM serving ---
+# vLLM is CUDA/torch-version sensitive; install it to match the box's CUDA
+# (usually `pip install vllm` pulls a compatible torch). See serve_qwen.sh.
+vllm

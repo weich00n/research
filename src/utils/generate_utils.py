@@ -53,16 +53,34 @@ class LLMClient:
             self.model = model or os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL)
         elif self.provider == "local":
             base = os.getenv("LOCAL_LLM_URL")
-            if not base:
-                raise RuntimeError("Set LOCAL_LLM_URL in .env (or use LLM_PROVIDER=openrouter)")
-            self.url = base.rstrip("/") + "/chat/completions"
+            # LOCAL_LLM_URLS (comma-separated) lets one client fan requests across
+            # several vLLM servers (one per GPU) when --data-parallel-size isn't
+            # available; otherwise a single LOCAL_LLM_URL (e.g. a DP endpoint) is used.
+            urls_env = os.getenv("LOCAL_LLM_URLS")
+            if urls_env:
+                self.urls = [u.strip().rstrip("/") + "/chat/completions"
+                             for u in urls_env.split(",") if u.strip()]
+                self.url = self.urls[0]
+            elif base:
+                self.url = base.rstrip("/") + "/chat/completions"
+            else:
+                raise RuntimeError("Set LOCAL_LLM_URL or LOCAL_LLM_URLS in .env "
+                                   "(or use LLM_PROVIDER=openrouter)")
             self.api_key = os.getenv("LOCAL_LLM_API_KEY", "not-needed")
             self.model = model or os.getenv("LOCAL_LLM_MODEL", "llama3")
         else:
             raise ValueError(f"Unknown LLM_PROVIDER: {self.provider!r} (use 'openrouter' or 'local')")
 
-    def chat(self, system, user, temperature=None):
-        """Send one system+user exchange and return the assistant text."""
+        # All endpoints this client may target. Single-element unless LOCAL_LLM_URLS
+        # set multiple; the engine round-robins over it for concurrent runs.
+        self.urls = getattr(self, "urls", None) or [self.url]
+
+    def chat(self, system, user, temperature=None, url=None):
+        """Send one system+user exchange and return the assistant text.
+
+        `url` overrides the default endpoint (used to spread concurrent calls
+        across several local vLLM servers); defaults to self.url.
+        """
         payload = {
             "model": self.model,
             "temperature": self.temperature if temperature is None else temperature,
@@ -76,7 +94,7 @@ class LLMClient:
         start = time.time()
         for attempt in range(self.max_retries):
             try:
-                resp = requests.post(self.url, json=payload, headers=headers,
+                resp = requests.post(url or self.url, json=payload, headers=headers,
                                      timeout=self.timeout)
                 if resp.status_code == 429:
                     # rate limited: honour Retry-After if given, else back off hard
@@ -113,9 +131,9 @@ class LLMClient:
         logger.error(f"LLM call gave up after {self.max_retries} attempts: {last_error}")
         raise RuntimeError(f"LLM call failed after {self.max_retries} attempts: {last_error}")
 
-    def chat_json(self, system, user, temperature=None):
+    def chat_json(self, system, user, temperature=None, url=None):
         """chat() + JSON parsing, retrying once with a stricter reminder on parse failure."""
-        text = self.chat(system, user, temperature=temperature)
+        text = self.chat(system, user, temperature=temperature, url=url)
         try:
             return parse_json_response(text)
         except ValueError:
@@ -125,6 +143,7 @@ class LLMClient:
                 system,
                 user + "\n\nIMPORTANT: Respond with VALID JSON ONLY. No prose, no markdown.",
                 temperature=0.0,
+                url=url,
             )
             return parse_json_response(text)
 

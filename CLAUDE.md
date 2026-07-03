@@ -26,7 +26,7 @@ Every agent's internal state is structured around three TPB constructs. Demograp
 | `pbc_score` (Perceived Behavioural Control) | Does the agent feel *capable* of having and raising a child? | Income, housing readiness, childcare access, work-life balance |
 | `fertility_intention_score` | Probability distribution over intention levels | Output variable — see below |
 
-All TPB scores use a **1–5 scale**. All agents initialise at neutral: `attitude=3, norm=3, pbc=3`.
+All TPB scores use a **1–5 scale**. Agents are *created* at neutral (`attitude=3, norm=3, pbc=3`), then a one-time deterministic **seed-only baseline pass (t=0)** sets grounded, profile-differentiated scores + intention from the seed memories (full 1–5 range, no "stay near 3" anchor). This baseline is frozen into `agents_final_100_seeded.json` (via `driver.py --init-only`) and shared by C0–C3, so every condition starts identical. The neutral 3/3/3 remains the scale's midpoint, not a starting belief.
 
 ---
 
@@ -105,6 +105,8 @@ Each memory object:
     "importance": float,              # 0–1, not memorable → life-changing
     "available_from_timestep": int,   # posts visible to others only from t+1
     "memory_class": str,              # "seed" | "simulation"
+    "relevance": dict,                # {attitude,norm,pbc} in [0,1]; what retrieval ranks by (LLM-judge scores in hybrid mode, filled lazily by rerank)
+    "cosine_relevance": dict,         # {attitude,norm,pbc} cosine prefilter signal (hybrid mode only); shortlists rerank candidates, not used by retrieval
     "retrieval_history": list,        # when retrieved and for which TPB construct
     "used_in_update": bool
 }
@@ -114,13 +116,15 @@ Each memory object:
 
 ## Simulation Loop (1 timestep = 1 week)
 
+**Before week 1 (once):** generate 5 seed memories per agent, then run a deterministic **seed-only baseline pass at t=0** that *sets* each agent's TPB scores + intention distribution from those seeds (full 1–5 range, no neutral anchor, scores only — no reflection memory). This is frozen into `agents_final_100_seeded.json` and shared across C0–C3. The weekly loop below then runs from t=1 against that grounded baseline.
+
 Each timestep, for each agent:
 
 1. Receive fertility-related **policy news** (if in policy condition).
 2. Read **social posts** from connected agents (posted at t-1).
 3. Convert inputs into new **fertility-relevant memories** (tagged by TPB construct).
 4. Calculate **saliency** for all memories: `saliency = importance × λ^(current_t − created_t)` where `λ = 0.995`.
-5. Calculate **TPB relevance** for each memory using LLM-as-judge (or cosine similarity to TPB construct prompts).
+5. Calculate **TPB relevance** for each memory. Three switchable modes (`--relevance-mode`): `llm` (LLM-as-judge every memory at creation), `cosine` (embedding similarity to the construct embed anchors), or `hybrid` (**recommended for norm**: cheap cosine prefilter → LLM rerank — at retrieval, take the cosine top-K per construct, union them, and LLM-judge only that shortlist, cached per memory).
 6. **Retrieve top memories**: up to 5 seed/profile memories + up to 5 per TPB construct from simulation memories (max 20 total, no duplicates).
 7. Two **decoupled** LLM calls: (7a) **update TPB scores** (`attitude`, `subjective_norm`, `pbc`) + reflection memory, and (7b) **update the `fertility_intention` distribution** in a separate call that does **not** see the TPB scores — so the TPB→intention link is *measured* (mediation), not *instructed*.
 8. Agent may **post** a fertility-related message to the social network (available to connected agents at t+1).
@@ -142,7 +146,7 @@ Retrieve top-5 per TPB construct. If a memory would appear in multiple construct
 
 | Condition | Policy News | Social Posts | Purpose |
 |---|---|---|---|
-| C0 — Static Baseline | ✗ | ✗ | Check seed-memory baseline only |
+| C0 — Static Baseline | ✗ | ✗ | The t=0 baseline (seed-only), then frozen — control / drift floor |
 | C1 — Social Only | ✗ | ✓ | Isolate peer/social influence |
 | C2 — Policy Only | ✓ | ✗ | Isolate direct policy effect |
 | C3 — Policy + Social | ✓ | ✓ | Test interaction / amplification |
@@ -256,6 +260,16 @@ Output format:
 {"attitude_relevance": 0.2, "norm_relevance": 0.1, "pbc_relevance": 0.9}
 ```
 
+These judge prompts (`CONSTRUCT_PROMPTS`, mirroring the construct definitions) are used
+verbatim by the `llm` scorer and by the `hybrid` reranker — **do not broaden them**.
+The `cosine` / `hybrid`-prefilter stage instead embeds a separate, recall-broadened
+set of anchors (`CONSTRUCT_EMBED_PROMPTS`) that enumerate the concrete ways each
+construct shows up in memories — `subjective_norm` especially (parental/peer/referent
+expectations, injunctive vs descriptive, social messaging) — because bare-definition
+cosine underranks relational norm content. Broadening the embed anchor is safe: in
+`hybrid` mode cosine only decides *which* memories the LLM judges (recall); the LLM
+still supplies the per-construct scores (precision).
+
 ### Belief State Update (each timestep) — two decoupled LLM calls
 
 TPB scores and the fertility-intention distribution are generated by **two
@@ -314,12 +328,13 @@ Before interpreting simulation results, verify:
 |---|---|
 | `fark_agent.ipynb` | Data pipeline: Nemotron → 100 calibrated agents |
 | `agents_initialised.json` | v1-pipeline agent profiles (kept for provenance; superseded as sim input) |
-| `agents_final_100.json` | **Current simulation input.** Final 100-agent pool from the validated v2 consensus (see note below) |
+| `agents_final_100.json` | Final 100-agent pool from the validated v2 consensus (see note below); the pristine profiles (neutral beliefs, no seeds) |
+| `agents_final_100_seeded.json` | **Current simulation input for runs.** `agents_final_100.json` + seed memories + the frozen t=0 baseline, produced once by `driver.py --init-only`; loaded by every condition (C0–C3) so they start identical |
 | `CLAUDE.md` | This file — project reference for AI agents and developers |
 | `src/build_final_agents.py` | Builds `agents_final_100.json` from validation outputs (reproducible, seed 42) |
 | `src/driver.py` | Simulation runner CLI (conditions C0–C3) |
 | `src/generate_social_network.py` | One-off LLM-generated directed friendship network (VacSim style) |
-| `src/LLM_judge.py` | TPB relevance scorer (LLM-as-judge or cosine, switchable) |
+| `src/LLM_judge.py` | TPB relevance scorer, switchable `llm` / `cosine` / `hybrid` (cosine prefilter top-K union → LLM rerank, cached). Cosine uses the recall-broadened `CONSTRUCT_EMBED_PROMPTS`; the LLM judge uses the faithful `CONSTRUCT_PROMPTS` |
 | `src/engines/engine.py` | Weekly simulation loop (perceive → retrieve → update → post → save) |
 | `src/sandbox/agent.py` | 3-layer fertility agent (static profile, TPB beliefs, memory stream) |
 | `src/sandbox/lesson.py` | Memory object (CLAUDE.md schema) + saliency decay + retrieval formula |

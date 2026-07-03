@@ -1,41 +1,47 @@
 """TPB relevance scoring for memories (VacSim: LLM_judge.py).
 
-Two interchangeable modes:
+Three interchangeable modes:
 - "llm":    LLM-as-judge using the CLAUDE.md construct prompts.
 - "cosine": embedding cosine similarity between the memory text and each
-            construct prompt (needs sentence-transformers).
+            construct embed anchor (needs sentence-transformers).
+- "hybrid": cosine as a cheap prefilter (recall) + LLM judge as the reranker
+            (precision). At creation a memory stores only its cosine prefilter
+            scores; at retrieval `rerank()` shortlists the top-K per construct
+            (union) and LLM-judges just those, cached. Needs both an LLM and an
+            embedder.
 
-Both return {"attitude": float, "norm": float, "pbc": float} in [0, 1].
+All per-memory scores are {"attitude": float, "norm": float, "pbc": float} in [0, 1].
 """
 
-from sandbox.prompts import CONSTRUCT_PROMPTS, build_relevance_prompt
+from sandbox.prompts import CONSTRUCT_EMBED_PROMPTS, build_relevance_prompt
 from utils.utils import clamp
 
 
 class RelevanceScorer:
-    """Scores how relevant a memory is to each TPB construct, in two modes.
+    """Scores how relevant a memory is to each TPB construct, in three modes.
 
     mode="llm" asks an LLM to judge (needs an LLMClient). mode="cosine" compares
-    sentence embeddings of the memory against the construct prompts (needs
-    sentence-transformers). In cosine mode the construct prompts are embedded
-    once up front and cached in `_construct_embeddings`.
+    sentence embeddings of the memory against the (recall-broadened) construct embed
+    anchors (needs sentence-transformers). mode="hybrid" uses cosine to shortlist
+    candidates and the LLM to rerank them (needs both). In cosine/hybrid modes the
+    embed anchors are embedded once up front and cached in `_construct_embeddings`.
     """
 
     def __init__(self, mode="llm", llm=None, embedder=None):
-        if mode not in ("llm", "cosine"):
-            raise ValueError(f"mode must be 'llm' or 'cosine', got {mode!r}")
+        if mode not in ("llm", "cosine", "hybrid"):
+            raise ValueError(f"mode must be 'llm', 'cosine' or 'hybrid', got {mode!r}")
         self.mode = mode
         self.llm = llm
         self.embedder = embedder
         self._construct_embeddings = None
-        if mode == "llm" and llm is None:
-            raise ValueError("mode='llm' requires an LLMClient")
-        if mode == "cosine":
+        if mode in ("llm", "hybrid") and llm is None:
+            raise ValueError(f"mode={mode!r} requires an LLMClient")
+        if mode in ("cosine", "hybrid"):
             if embedder is None:
                 from utils.generate_utils import EmbeddingClient
                 self.embedder = EmbeddingClient()
-            keys = list(CONSTRUCT_PROMPTS)
-            vecs = self.embedder.embed([CONSTRUCT_PROMPTS[k] for k in keys])
+            keys = list(CONSTRUCT_EMBED_PROMPTS)
+            vecs = self.embedder.embed([CONSTRUCT_EMBED_PROMPTS[k] for k in keys])
             self._construct_embeddings = dict(zip(keys, vecs))
 
     def score(self, memory_text):
@@ -43,6 +49,47 @@ class RelevanceScorer:
         if self.mode == "llm":
             return self._score_llm(memory_text)
         return self._score_cosine(memory_text)
+
+    def creation_scores(self, memory_text):
+        """Scores to store on a NEW memory, as (relevance, cosine_relevance).
+
+        - llm:    (LLM-judge scores, {})  — relevance is final at creation.
+        - cosine: (cosine scores, {})     — relevance is final at creation.
+        - hybrid: ({}, cosine scores)     — relevance left empty and filled lazily by
+          `rerank()` at retrieval; cosine_relevance is the prefilter signal.
+        """
+        if self.mode == "llm":
+            return self._score_llm(memory_text), {}
+        if self.mode == "cosine":
+            return self._score_cosine(memory_text), {}
+        # hybrid
+        return {}, self._score_cosine(memory_text)
+
+    def rerank(self, lessons, top_k=12):
+        """Hybrid retrieval-time rerank: cosine-shortlist, then LLM-judge the shortlist.
+
+        For each TPB construct take the top_k simulation memories by their cosine
+        prefilter score, then UNION those shortlists into one candidate set — a memory
+        enters if it is top_k on ANY construct, which maximises recall into the pool
+        (important for subjective_norm, which cosine underranks). Each candidate not
+        yet judged gets one LLM-judge call, cached on `lesson.relevance` so it is
+        judged at most once over the run. No-op unless mode='hybrid'.
+        """
+        if self.mode != "hybrid":
+            return
+        sim = [l for l in lessons if getattr(l, "memory_class", None) == "simulation"]
+        if not sim:
+            return
+        candidates = set()
+        for construct in self._construct_embeddings:
+            ranked = sorted(sim, key=lambda l: l.cosine_relevance.get(construct, 0.0),
+                            reverse=True)
+            for l in ranked[:top_k]:
+                if l.cosine_relevance.get(construct, 0.0) > 0.0:
+                    candidates.add(l)
+        for l in candidates:
+            if not l.relevance:  # judge once, then cache
+                l.relevance = self._score_llm(l.memory_text)
 
     def _score_llm(self, memory_text):
         """LLM-as-judge: ask for the three relevance scores; clamp each to [0,1]."""

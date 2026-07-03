@@ -46,7 +46,8 @@ class Lesson:
 
     def __init__(self, agent_id, memory_text, created_timestep, source_type,
                  importance, memory_class, source_agent_id=None,
-                 available_from_timestep=None, relevance=None, memory_id=None):
+                 available_from_timestep=None, relevance=None, memory_id=None,
+                 cosine_relevance=None):
         assert source_type in SOURCE_TYPES, f"bad source_type: {source_type}"
         assert memory_class in MEMORY_CLASSES, f"bad memory_class: {memory_class}"
         self.memory_id = memory_id or f"M{next(_id_counter):06d}"
@@ -62,8 +63,14 @@ class Lesson:
             else created_timestep
         )
         self.memory_class = memory_class
-        # {"attitude": float, "norm": float, "pbc": float}, each in [0, 1]
+        # {"attitude": float, "norm": float, "pbc": float}, each in [0, 1].
+        # This is what retrieve_memories ranks by. In hybrid mode it is empty until
+        # rerank() fills it with LLM-judge scores for shortlisted candidates.
         self.relevance = relevance or {}
+        # Cheap cosine prefilter signal (hybrid mode); same {construct: [0,1]} shape.
+        # Used by RelevanceScorer.rerank to shortlist candidates; not used by
+        # retrieve_memories. Empty in llm/cosine modes.
+        self.cosine_relevance = cosine_relevance or {}
         self.retrieval_history = []
         self.used_in_update = False
 
@@ -87,6 +94,7 @@ class Lesson:
             "available_from_timestep": self.available_from_timestep,
             "memory_class": self.memory_class,
             "relevance": self.relevance,
+            "cosine_relevance": self.cosine_relevance,
             "retrieval_history": self.retrieval_history,
             "used_in_update": self.used_in_update,
         }
@@ -104,6 +112,7 @@ class Lesson:
             available_from_timestep=d.get("available_from_timestep"),
             relevance=d.get("relevance"),
             memory_id=d.get("memory_id"),
+            cosine_relevance=d.get("cosine_relevance"),
         )
         lesson.retrieval_history = d.get("retrieval_history", [])
         lesson.used_in_update = d.get("used_in_update", False)
