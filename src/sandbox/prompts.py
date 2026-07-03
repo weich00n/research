@@ -194,9 +194,15 @@ Definitions (all scores on a 1-5 scale):
 - pbc_score: how capable they feel of having and raising a child given their
   resources and constraints (1 = not capable at all, 5 = fully capable).
 
-Update scores gradually and realistically: a single week of input should shift
-scores by small amounts unless the memories are truly life-changing. Stay
-consistent with the person's profile and circumstances.
+Update scores gradually and realistically. Beliefs reflect the person's overall
+life circumstances, which rarely change from week to week — most weeks the
+right update is no change or a very small one. Only genuinely NEW information
+or changed circumstances should move a score; if a memory or message repeats
+something they have already heard and factored in (e.g. a policy they already
+know about), it should NOT shift their scores again. Scores can move down as
+well as up, and can settle back once the novelty of an experience fades — a
+steady week-after-week climb (or fall) without genuinely new developments is
+unrealistic. Stay consistent with the person's profile and circumstances.
 
 Also write reflection_memory: ONE first-person sentence summarising how this
 week's experiences changed (or reinforced) their thinking about having children.
@@ -217,9 +223,13 @@ fertility_intention is a probability distribution over 5 ordinal intention level
 5 = strong intention.
 
 Judge their intention holistically from their overall situation and what they
-experienced this week. Update gradually and realistically: a single week should
-shift the distribution only a little unless the experiences are truly
-life-changing. Briefly explain your reasoning in one sentence.
+experienced this week. Update gradually and realistically: intention reflects
+their overall life circumstances, which rarely change from week to week — most
+weeks the right update is no change or a very small one. Only genuinely NEW
+information or changed circumstances should move the distribution; repeated
+exposure to things they already know should not shift it again, and intention
+can weaken as well as strengthen. Briefly explain your reasoning in one
+sentence.
 
 Respond with JSON only:
 {"reasoning": "...", "fertility_intention": [0.1, 0.2, 0.4, 0.2, 0.1]}"""

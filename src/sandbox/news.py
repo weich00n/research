@@ -47,11 +47,23 @@ def build_news_schedule(num_timesteps, category=None, start_timestep=1):
     One policy news item is broadcast to all agents each week, in a fixed
     deterministic order (round-robin over the scenario's policies) so runs
     are reproducible. `category` of None uses the combined scenario.
+
+    After every policy has been announced once, later cycles are framed as
+    reminders rather than fresh announcements — re-"announcing" a policy the
+    agent already knows reads as new evidence every week and ratchets beliefs
+    monotonically toward the scale ceiling.
     """
     policies = get_policies(category)
     if not policies:
         raise ValueError(f"No policies for category {category!r}")
     schedule = {}
     for i, t in enumerate(range(start_timestep, start_timestep + num_timesteps)):
-        schedule[t] = [News(policies[i % len(policies)], t)]
+        policy = policies[i % len(policies)]
+        text = None
+        if i >= len(policies):  # repeat cycle: remind, don't re-announce
+            text = (
+                f"News this week: a reminder of the {policy.name}, which the "
+                f"Singapore Government announced earlier. {policy.description}"
+            )
+        schedule[t] = [News(policy, t, text=text)]
     return schedule
