@@ -53,25 +53,32 @@ def _parse_friend_indices(response, self_idx, num_agents):
 
 
 def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STATE,
-                         verbose=True):
+                         verbose=True, include_area=True):
     """Return {agent_id: [followed agent_ids]} chosen by the LLM per agent.
 
     If the LLM fails max_try times for an agent (VacSim leaves them edgeless),
     we instead fall back to `fallback_k` seeded-random friends so no agent is
     isolated; set fallback_k=0 for strict VacSim behaviour.
+
+    `include_area=False` drops the residence field from every profile (and from
+    the prompt's field list) for the with/without-area homophily comparison.
     """
     rng = np.random.default_rng(seed)
-    profile_lines = [f"{i}. {a.get_profile_str()}" for i, a in enumerate(agents)]
+    profile_lines = [f"{i}. {a.get_profile_str(include_area=include_area)}"
+                     for i, a in enumerate(agents)]
+    schema = "ID. Gender\tAge\tRelationship\tEducation\tOccupation\tIndustry"
+    if include_area:
+        schema += "\tArea"
     network = {}
 
     for idx, agent in enumerate(agents):
         others = [line for i, line in enumerate(profile_lines) if i != idx]
         system_prompt = (
             f"Pretend you are a person with the following profile: "
-            f"{agent.get_profile_str()}. You are joining a social network in "
+            f"{agent.get_profile_str(include_area=include_area)}. "
+            f"You are joining a social network in "
             f"Singapore. You will be provided a list of people in the network, "
-            f"where each person is described as 'ID. Gender\tAge\tRelationship\t"
-            f"Education\tOccupation\tIndustry\tArea'. Which of these people will "
+            f"where each person is described as '{schema}'. Which of these people will "
             f"you become friends with? Provide a list of *YOUR* friends in the "
             f"format ID, ID, ID, etc. Do not include any other text in your "
             f"response. Do not include any people who are not listed below."
@@ -120,6 +127,9 @@ if __name__ == "__main__":
                         help="limit to first N agents (for cheap test runs)")
     parser.add_argument("--fallback-k", type=int, default=5,
                         help="random friends if the LLM keeps failing (0 = strict VacSim)")
+    parser.add_argument("--no-area", action="store_true",
+                        help="hide planning area from the friendship prompt "
+                             "(with/without-area homophily comparison)")
     args = parser.parse_args()
 
     setup_logger(log_path=os.path.splitext(args.output)[0] + ".log")
@@ -132,7 +142,8 @@ if __name__ == "__main__":
     llm = LLMClient()
     logger.info(f"LLM: {llm.provider} / {llm.model}")
 
-    network = generate_llm_network(agents, llm, fallback_k=args.fallback_k)
+    network = generate_llm_network(agents, llm, fallback_k=args.fallback_k,
+                                   include_area=not args.no_area)
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     save_network(network, args.output)
     logger.info(f"Network saved to {args.output}")

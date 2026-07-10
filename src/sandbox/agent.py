@@ -104,7 +104,7 @@ class Agent:
 
     # ── Profile strings ────────────────────────────────────────────────────
 
-    def get_profile_str(self):
+    def get_profile_str(self, include_area=True):
         """Compact profile for social network generation (VacSim style).
 
         Demographics only (no narrative persona). The one-shot network-gen call
@@ -114,11 +114,19 @@ class Agent:
         fits — and matches VacSim, whose network profile string is also
         demographics-only. The full profile for belief prompts is
         prompts.profile_to_str.
+
+        `include_area=False` drops the residence field: the LLM over-anchors on
+        it (~31% same-planning-area ties vs ~5% by chance in the Qwen network),
+        implausibly strong for Singapore's scale. Used for the with/without-area
+        network comparison.
         """
-        return (f"Gender: {self.gender}\tAge: {self.age}\t"
-                f"Relationship: {self.relationship_status}\t"
-                f"Education: {self.education}\tOccupation: {self.occupation}\t"
-                f"Industry: {self.industry}\tArea: {self.planning_area}")
+        s = (f"Gender: {self.gender}\tAge: {self.age}\t"
+             f"Relationship: {self.relationship_status}\t"
+             f"Education: {self.education}\tOccupation: {self.occupation}\t"
+             f"Industry: {self.industry}")
+        if include_area:
+            s += f"\tArea: {self.planning_area}"
+        return s
 
     # ── Serialisation ──────────────────────────────────────────────────────
 
