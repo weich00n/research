@@ -53,7 +53,7 @@ def _parse_friend_indices(response, self_idx, num_agents):
 
 
 def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STATE,
-                         verbose=True, include_area=True):
+                         verbose=True, include_area=True, include_persona=False):
     """Return {agent_id: [followed agent_ids]} chosen by the LLM per agent.
 
     If the LLM fails max_try times for an agent (VacSim leaves them edgeless),
@@ -62,20 +62,25 @@ def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STAT
 
     `include_area=False` drops the residence field from every profile (and from
     the prompt's field list) for the with/without-area homophily comparison.
+    `include_persona=True` appends each agent's narrative persona (experimental;
+    ~9.9k-token prompt — needs the vLLM server at MAX_MODEL_LEN >= 16384).
     """
     rng = np.random.default_rng(seed)
-    profile_lines = [f"{i}. {a.get_profile_str(include_area=include_area)}"
+    profile_kwargs = {"include_area": include_area, "include_persona": include_persona}
+    profile_lines = [f"{i}. {a.get_profile_str(**profile_kwargs)}"
                      for i, a in enumerate(agents)]
     schema = "ID. Gender\tAge\tRelationship\tEducation\tOccupation\tIndustry"
     if include_area:
         schema += "\tArea"
+    if include_persona:
+        schema += "\tAbout"
     network = {}
 
     for idx, agent in enumerate(agents):
         others = [line for i, line in enumerate(profile_lines) if i != idx]
         system_prompt = (
             f"Pretend you are a person with the following profile: "
-            f"{agent.get_profile_str(include_area=include_area)}. "
+            f"{agent.get_profile_str(**profile_kwargs)}. "
             f"You are joining a social network in "
             f"Singapore. You will be provided a list of people in the network, "
             f"where each person is described as '{schema}'. Which of these people will "
@@ -130,6 +135,9 @@ if __name__ == "__main__":
     parser.add_argument("--no-area", action="store_true",
                         help="hide planning area from the friendship prompt "
                              "(with/without-area homophily comparison)")
+    parser.add_argument("--persona", action="store_true",
+                        help="append the narrative general_persona to each profile "
+                             "(experimental; needs vLLM MAX_MODEL_LEN >= 16384)")
     args = parser.parse_args()
 
     setup_logger(log_path=os.path.splitext(args.output)[0] + ".log")
@@ -143,7 +151,8 @@ if __name__ == "__main__":
     logger.info(f"LLM: {llm.provider} / {llm.model}")
 
     network = generate_llm_network(agents, llm, fallback_k=args.fallback_k,
-                                   include_area=not args.no_area)
+                                   include_area=not args.no_area,
+                                   include_persona=args.persona)
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     save_network(network, args.output)
     logger.info(f"Network saved to {args.output}")

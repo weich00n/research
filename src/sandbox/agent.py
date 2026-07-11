@@ -104,7 +104,7 @@ class Agent:
 
     # ── Profile strings ────────────────────────────────────────────────────
 
-    def get_profile_str(self, include_area=True):
+    def get_profile_str(self, include_area=True, include_persona=False):
         """Compact profile for social network generation (VacSim style).
 
         Demographics only (no narrative persona). The one-shot network-gen call
@@ -118,7 +118,12 @@ class Agent:
         `include_area=False` drops the residence field: the LLM over-anchors on
         it (~31% same-planning-area ties vs ~5% by chance in the Qwen network),
         implausibly strong for Singapore's scale. Used for the with/without-area
-        network comparison.
+        network comparison (see outputs/analysis/network_area_decision.md).
+
+        `include_persona=True` appends the narrative `general_persona`
+        (experimental): the 100-agent prompt then measures ~9.9k tokens, so the
+        vLLM server must be launched with MAX_MODEL_LEN >= 16384. Diverges from
+        VacSim (demographics-only) — test artifact, not the production default.
         """
         s = (f"Gender: {self.gender}\tAge: {self.age}\t"
              f"Relationship: {self.relationship_status}\t"
@@ -126,6 +131,8 @@ class Agent:
              f"Industry: {self.industry}")
         if include_area:
             s += f"\tArea: {self.planning_area}"
+        if include_persona:
+            s += f"\tAbout: {self.general_persona}"
         return s
 
     # ── Serialisation ──────────────────────────────────────────────────────
