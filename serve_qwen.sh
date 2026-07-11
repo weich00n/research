@@ -25,8 +25,8 @@
 set -euo pipefail
 
 MODEL="${MODEL:-Qwen/Qwen2.5-14B-Instruct}"
-MAX_MODEL_LEN="${MAX_MODEL_LEN:-8192}"
-BASE_PORT="${BASE_PORT:-8000}"   # first replica = BASE_PORT+1
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-16384}"
+BASE_PORT="${BASE_PORT:-8100}"   # first replica = BASE_PORT+1
 GPUS="${GPUS:-0 1 2 3}"
 
 echo "Serving $MODEL  (max_model_len=$MAX_MODEL_LEN)  on GPUs: $GPUS"
