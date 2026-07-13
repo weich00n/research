@@ -51,9 +51,10 @@ POLICIES = [
         name="Large Family Scheme",
         category=FINANCIAL,
         description=(
-            "Families with three or more children receive a S$10,000 CDA top-up, a "
-            "S$5,000 MediSave grant for the mother, and S$1,000 per year in LifeSG "
-            "credits per child until age 6."
+            "Families receive up to S$16,000 of additional support for each third or "
+            "subsequent child: an increased S$10,000 CDA First Step Grant, a S$5,000 "
+            "MediSave grant for the mother, and S$1,000 per year in LifeSG credits "
+            "per child until age 6."
         ),
         expected_pathways=["pbc"],
     ),
@@ -81,9 +82,10 @@ POLICIES = [
         name="Shared Parental Leave",
         category=CAREGIVING,
         description=(
-            "A new Shared Parental Leave scheme gives parents additional weeks of "
-            "government-paid leave to split between mother and father in their "
-            "child's first year."
+            "A new Shared Parental Leave scheme gives parents up to 10 weeks of "
+            "additional government-paid leave to share between mother and father — "
+            "6 weeks for children born from April 2025, rising to 10 weeks from "
+            "April 2026."
         ),
         expected_pathways=["pbc", "attitude"],
     ),

@@ -45,6 +45,11 @@ def main():
     parser.add_argument("--policy-category", choices=["financial", "caregiving", "combined"],
                         default="combined",
                         help="policy scenario for the news schedule (C2/C3)")
+    parser.add_argument("--news-corpus", default=None,
+                        help="pre-generated article corpus for the news schedule "
+                             "(generate_news_corpus.py output); each week then serves "
+                             "a distinct factual article instead of the verbatim "
+                             "announce/remind text. Default: legacy behaviour")
     parser.add_argument("--relevance-mode", choices=["llm", "cosine", "hybrid"], default="llm",
                         help="how memory TPB relevance is scored: 'llm' (judge every "
                              "memory at creation), 'cosine' (embedding similarity), or "
@@ -140,7 +145,8 @@ def main():
     news_schedule = None
     if policy_on:
         category = None if args.policy_category == "combined" else args.policy_category
-        news_schedule = build_news_schedule(args.timesteps, category=category)
+        news_schedule = build_news_schedule(args.timesteps, category=category,
+                                            corpus_path=args.news_corpus)
 
     sim = Simulation(
         agents=agents,
