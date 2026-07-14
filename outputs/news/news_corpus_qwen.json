@@ -1,0 +1,431 @@
+{
+  "generated_at": "2026-07-14T13:02:37",
+  "model": "Qwen/Qwen2.5-14B-Instruct",
+  "temperature": 0.9,
+  "source": "Made For Families M&P booklet (Apr 2025); Child LifeSG Credits: Budget 2025. See outputs/analysis/news_dissemination_design.md",
+  "articles": [
+    {
+      "news_id": "baby_bonus_and_child_development_account__announcement_1",
+      "policy_name": "Baby Bonus & Child Development Account",
+      "policy_category": "financial",
+      "article_type": "announcement",
+      "text": "Government Announces Enhanced Baby Bonus and Child Development Account Scheme\n\nThe government has announced enhancements to the Baby Bonus and Child Development Account (CDA) scheme, providing cash gifts and matching funds to help families with childcare, preschool, and healthcare expenses. The Baby Bonus offers a cash gift of up to S$11,000 and S$13,000 for the first two and third and subsequent children, respectively, paid into the Child Savings Account in six-month instalments until the child turns six-and-a-half. The CDA includes a First Step Grant of S$5,000 for the first and second child and S$10,000 for the third and subsequent children born on or after 18 February 2025. Parents receive dollar-for-dollar Government co-matching of their savings up to S$4,000, S$7,000, S$9,000, and S$15,000 for the first, second, third and fourth, and fifth and subsequent children, respectively. Total Government contributions to the CDA, including the First Step Grant and maximum co-matching, range from S$9,000 to S$25,000 depending on the child's birth order.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "baby_bonus_and_child_development_account__explainer_1",
+      "policy_name": "Baby Bonus & Child Development Account",
+      "policy_category": "financial",
+      "article_type": "explainer",
+      "text": "Baby Bonus & Child Development Account: Benefits and How to Use\n\nThe Baby Bonus and Child Development Account (CDA) offer substantial financial support for families with young children. Parents of the first and second child receive a Baby Bonus cash gift of S$11,000 each, while the third and subsequent children receive S$13,000 each. The cash gift is paid into the Child Savings Account in instalments every six months until the child turns six-and-a-half.\n\nFor the Child Development Account, a First Step Grant of S$5,000 is provided for the first and second child (S$10,000 for third children born on or after 18 February 2025), with the Government matching parents' savings dollar-for-dollar up to S$4,000 for the first child, S$7,000 for the second, S$9,000 for the third and fourth, and S$15,000 for the fifth and beyond. The total Government contribution to the CDA is S$9,000 for the first child, S$12,000 for the second, S$19,000 for the third and fourth, and S$25,000 for the fifth and beyond. CDA funds are used for childcare, preschool, and healthcare expenses at Baby Bonus Approved Institutions.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "baby_bonus_and_child_development_account__explainer_2",
+      "policy_name": "Baby Bonus & Child Development Account",
+      "policy_category": "financial",
+      "article_type": "explainer",
+      "text": "Baby Bonus & Child Development Account: How the Support Works for Families\n\nThe Baby Bonus programme provides a cash gift of up to S$11,000 for the first and second child and up to S$13,000 for the third and subsequent children, paid into the Child Savings Account in instalments every six months until the child turns six-and-a-half years old.\n\nThe Child Development Account (CDA) offers a First Step Grant of S$5,000 for the first and second child (S$10,000 for third and subsequent children born on or after 18 February 2025), deposited automatically into the CDA. Parents can save up to S$4,000 for the first child, S$7,000 for the second, S$9,000 for the third and fourth, and S$15,000 for the fifth and beyond, with dollar-for-dollar matching from the Government. This means the total Government contribution to the CDA can reach S$9,000 for the first child, S$12,000 for the second, S$19,000 for the third and fourth, and S$25,000 for the fifth and beyond. CDA funds can be used at Baby Bonus Approved Institutions for childcare, preschool, and healthcare expenses.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "baby_bonus_and_child_development_account__family_impact_1",
+      "policy_name": "Baby Bonus & Child Development Account",
+      "policy_category": "financial",
+      "article_type": "family_impact",
+      "text": "Baby Bonus and CDA Support for Singapore Families\n\nA couple in Singapore having their second child will receive a Baby Bonus cash gift of S$11,000, payable in instalments every six months until the child turns six-and-a-half. Additionally, their Child Development Account (CDA) will receive a First Step Grant of S$5,000, combined with dollar-for-dollar matching from the Government for up to S$7,000 in parental savings, bringing the total contributions to S$12,000. These funds are usable at Baby Bonus Approved Institutions for childcare, preschool, and healthcare expenses.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "large_family_scheme__announcement_1",
+      "policy_name": "Large Family Scheme",
+      "policy_category": "financial",
+      "article_type": "announcement",
+      "text": "Large Families Scheme offers up to S$16,000 support for third or subsequent children\n\nThe Singapore Government has launched the Large Families Scheme, providing up to S$16,000 in additional support for each third or subsequent Singapore Citizen child born on or after 18 February 2025. Components include an increased Child Development Account First Step Grant of S$10,000 (up from S$5,000), a S$5,000 MediSave grant deposited into the mother's account, and S$1,000 per year in LifeSG credits per child until they turn six (S$6,000 in total). These credits, disbursed via the LifeSG app, can be used for groceries, utilities, pharmacy items, and transport. Existing large families with at least one child aged six or below in 2025 also qualify for the LifeSG credits. Additionally, merchant discounts from corporate partners are available to large families.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "large_family_scheme__explainer_1",
+      "policy_name": "Large Family Scheme",
+      "policy_category": "financial",
+      "article_type": "explainer",
+      "text": "Large Families in Singapore Receive up to S$16,000 Support Per Child\n\nSingaporean couples with, or aspiring to have, three or more children can receive up to S$16,000 of additional support per third or subsequent child born on or after 18 February 2025. This includes an increased CDA First Step Grant of S$10,000, a one-time S$5,000 Large Family MediSave Grant for the mother, and S$1,000 per year in Large Family LifeSG Credits until the child turns six (S$6,000 total). These LifeSG credits can be used for groceries, utilities, pharmacy items, and transport through the LifeSG app. The scheme also applies to existing large families with at least one child aged six or below in 2025. Additional benefits include merchant discounts from corporate partners.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "large_family_scheme__explainer_2",
+      "policy_name": "Large Family Scheme",
+      "policy_category": "financial",
+      "article_type": "explainer",
+      "text": "Large Families Scheme: Support for Third or Subsequent Children\n\nThe Large Families Scheme offers support for Singapore Citizen families with three or more children. For each third or subsequent child born on or after 18 February 2025, families receive an increased CDA First Step Grant of S$10,000 (up from S$5,000). A S$5,000 Large Family MediSave Grant is also deposited into the mother’s MediSave account, available for pregnancy and delivery expenses and approved dependants’ medical bills. Additionally, families receive S$1,000 per year in Large Family LifeSG Credits for each child turning one to six, totalling S$6,000. These credits, disbursed via the LifeSG app, can be used for groceries, utilities, pharmacy items, and transport. The LifeSG credits are also applicable to existing families with at least one child aged six or below in 2025. Large families also benefit from merchant discounts from participating corporations.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "large_family_scheme__family_impact_1",
+      "policy_name": "Large Family Scheme",
+      "policy_category": "financial",
+      "article_type": "family_impact",
+      "text": "Large Families Scheme boosts support for third or subsequent children\n\nUnder the Large Families Scheme, launched on 18 February 2025, Singaporean couples with or expecting a third child or more will receive substantial financial aid. For their third child, the family would receive an increased CDA First Step Grant of S$10,000, a S$5,000 Large Family MediSave Grant, and S$1,000 per year in Large Family LifeSG Credits until the child turns six (S$6,000 in total). These components together provide a total support of S$16,000. Similarly, for each subsequent child, the family would again receive S$16,000. Additionally, the LifeSG credits can be used for groceries, utilities, pharmacy items, and transport, disbursed via the LifeSG app. Existing large families with at least one child aged six or below in 2025 also qualify for the LifeSG credits.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "large_family_scheme__family_impact_2",
+      "policy_name": "Large Family Scheme",
+      "policy_category": "financial",
+      "article_type": "family_impact",
+      "text": "Large Family Scheme Boosts Support for Third or Subsequent Children\n\nThe Large Family Scheme, which supports Singaporean families with three or more children, offers up to S$16,000 in additional support for each third or subsequent child born on or after 18 February 2025. For example, a typical family with a third child can receive an increased Child Development Account (CDA) First Step Grant of S$10,000, a S$5,000 MediSave grant for the mother, and S$1,000 per year in LifeSG credits until the child turns six (S$6,000 total). These funds are disbursed via the LifeSG app and can be used for groceries, utilities, pharmacy items, and transport. The scheme also provides existing large families with similar benefits for children aged six or below in 2025, and special merchant discounts from corporate partners.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "large_family_scheme__roundup_1",
+      "policy_name": "Large Family Scheme",
+      "policy_category": "financial",
+      "article_type": "roundup",
+      "text": "Large Families Receive Up to S$16,000 in Additional Support\n\nThe Large Families Scheme continues to provide up to S$16,000 of additional support for each third or subsequent Singapore Citizen child born on or after 18 February 2025. This support includes an increased Child Development Account (CDA) First Step Grant of S$10,000, a S$5,000 Large Family MediSave Grant for the mother, and S$1,000 per year in Large Family LifeSG Credits, totalling S$6,000 until the child turns six. The LifeSG credits can be used for groceries, utilities, pharmacy items, and transport. Existing large families with children aged six or below as of 2025 also qualify for these benefits. Additionally, large families enjoy merchant discounts from corporate partners.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "child_lifesg_credits__announcement_1",
+      "policy_name": "Child LifeSG Credits",
+      "policy_category": "financial",
+      "article_type": "announcement",
+      "text": "Child LifeSG Credits: S$500 One-Off Payment for Singapore Citizen Children Aged 12 and Below\n\nThe Government has announced a one-off S$500 in Child LifeSG Credits for every Singapore Citizen child aged 12 and below in 2025. This credit is part of the SG60 package and will be disbursed via the LifeSG app. The funding can be used for daily household and child-raising expenses such as groceries, pharmacy items and transport.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "child_lifesg_credits__explainer_1",
+      "policy_name": "Child LifeSG Credits",
+      "policy_category": "financial",
+      "article_type": "explainer",
+      "text": "Parents receive S$500 in Child LifeSG Credits for each child aged 12 and below\n\nParents of Singapore Citizen children aged 12 and below are eligible to receive a one-off S$500 in Child LifeSG Credits. These credits are usable for a range of daily household and child-raising expenses, including groceries, pharmacy items, and transport. The credits will be disbursed via the LifeSG app, allowing for convenient access and use.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "child_lifesg_credits__explainer_2",
+      "policy_name": "Child LifeSG Credits",
+      "policy_category": "financial",
+      "article_type": "explainer",
+      "text": "Child LifeSG Credits: S$500 for Singapore Citizen Children Under 13\n\nSingapore Citizen children aged 12 and below qualify for a one-off S$500 in Child LifeSG Credits in 2025, disbursed via the LifeSG app. Parents can use these credits for daily household and child-raising expenses such as groceries, pharmacy items, and transport. The credits are not an annual payment and are part of the SG60 package.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "child_lifesg_credits__family_impact_1",
+      "policy_name": "Child LifeSG Credits",
+      "policy_category": "financial",
+      "article_type": "family_impact",
+      "text": "Child LifeSG Credits Offer One-Off S$500 Per Child\n\nThe Child LifeSG Credits scheme, announced as part of the SG60 package at Budget 2025, provides Singapore Citizen parents with one-off S$500 Child LifeSG Credits for each child aged 12 and below in 2025. These credits, available via the LifeSG app, can be used for daily household and child-raising expenses such as groceries, pharmacy items, and transport. For instance, a family with two children, aged five and eight, would receive a total of S$1,000 in Child LifeSG Credits to support their family’s needs.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "child_lifesg_credits__family_impact_2",
+      "policy_name": "Child LifeSG Credits",
+      "policy_category": "financial",
+      "article_type": "family_impact",
+      "text": "Child LifeSG Credits Provide One-Off Support for Every Singaporean Child Under 12\n\nUnder the recently announced Child LifeSG Credits scheme, every Singapore Citizen child aged 12 and below will receive a one-off S$500 in Child LifeSG Credits. This support, disbursed via the LifeSG app, is aimed at easing daily household and child-raising expenses. For example, a family with two Singapore Citizen children, aged 5 and 8 respectively, would receive a total of S$1,000 in Child LifeSG Credits in 2025. These credits are usable for expenses such as groceries, pharmacy items, and transport.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "child_lifesg_credits__roundup_1",
+      "policy_name": "Child LifeSG Credits",
+      "policy_category": "financial",
+      "article_type": "roundup",
+      "text": "Child LifeSG Credits: Supporting Parents with One-off S$500 Per Child\n\nParents of Singapore Citizen children aged 12 and below can utilise the Child LifeSG Credits scheme, which offers a one-off S$500 in credits for each child. These credits are disbursed via the LifeSG app and can be used for daily household and child-raising expenses such as groceries, pharmacy items, and transport. This existing support mechanism aims to alleviate some of the financial burdens associated with raising young children.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "enhanced_paternity_leave__announcement_1",
+      "policy_name": "Enhanced Paternity Leave",
+      "policy_category": "caregiving",
+      "article_type": "announcement",
+      "text": "Paternity leave extended under new government scheme\n\nThe Government-Paid Paternity Leave (GPPL) scheme has been enhanced, with leave doubled from two to four weeks. Since 1 January 2024, the additional two weeks have been available on a voluntary basis, but from 1 April 2025, these two weeks will become mandatory for employers. Eligible working fathers of Singapore Citizen children born on or after 1 April 2025 will be entitled to four weeks of GPPL. Fathers not eligible due to their work arrangements may apply for the Government-Paid Paternity Benefit instead.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "enhanced_paternity_leave__explainer_1",
+      "policy_name": "Enhanced Paternity Leave",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Enhanced Paternity Leave for Working Fathers\n\nThe Government-Paid Paternity Leave (GPPL) scheme offers eligible working fathers of Singapore Citizen children born on or after 1 April 2025 a total of 4 weeks of paid leave. This includes two weeks provided by the government, which was previously set at two weeks but has been doubled. An additional two weeks, initially offered on a voluntary basis since 1 January 2024, become mandatory for employers from 1 April 2025. Fathers who do not qualify due to their work arrangements, such as those in irregular employment, can apply for the Government-Paid Paternity Benefit instead.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "enhanced_paternity_leave__explainer_2",
+      "policy_name": "Enhanced Paternity Leave",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Enhanced Paternity Leave: What You Need to Know\n\nGovernment-Paid Paternity Leave (GPPL) has been doubled from 2 to 4 weeks, with an additional 2 weeks becoming mandatory for employers as of 1 April 2025. Eligible working fathers of Singapore Citizen children born on or after 1 April 2025 can receive 4 weeks of GPPL. The additional two weeks, which were previously voluntary, are now mandatory. Fathers not eligible due to work arrangements, such as irregular employment, can apply for the Government-Paid Paternity Benefit instead.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "enhanced_paternity_leave__family_impact_1",
+      "policy_name": "Enhanced Paternity Leave",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "Enhanced Paternity Leave for Singaporean Fathers\n\nThe Enhanced Paternity Leave scheme will provide eligible working fathers of Singapore Citizen children with 4 weeks of government-paid leave, starting from April 2025. For a typical Singaporean family, where the father works a regular job and their first child is born on or after April 1, 2025, the father will be entitled to 4 weeks of government-paid paternity leave. This means he will receive 2 weeks of mandatory leave under the existing scheme, with an additional 2 weeks on a mandatory basis from April 2025. For fathers who do not qualify due to their work arrangements, such as those in irregular employment, the Government-Paid Paternity Benefit remains an option.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "enhanced_paternity_leave__family_impact_2",
+      "policy_name": "Enhanced Paternity Leave",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "Enhanced Paternity Leave Doubles to Support New Parents\n\nGovernment-paid paternity leave (GPPL) for the birth of a Singapore Citizen child is now doubled from 2 to 4 weeks, with 2 of those weeks becoming mandatory for employers starting 1 April 2025. For a typical family, a working father of their first child born on or after 1 April 2025 will receive 4 weeks of GPPL. If the child is the second or subsequent child, the same benefits apply, ensuring that eligible fathers can take 4 weeks of leave to support early infant care. Fathers not eligible due to irregular employment can apply for the Government-Paid Paternity Benefit.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "enhanced_paternity_leave__roundup_1",
+      "policy_name": "Enhanced Paternity Leave",
+      "policy_category": "caregiving",
+      "article_type": "roundup",
+      "text": "Government-Paid Paternity Leave Expanded to Support Early Infant Care\n\nThe Enhanced Paternity Leave scheme, already available since 1 January 2024, now offers eligible working fathers of Singapore Citizen children an extended period of support. The government-paid leave has been doubled to four weeks, with two weeks mandatory for employers from 1 April 2025. This means fathers of Singapore Citizen children born on or after 1 April 2025 can take up to four weeks of leave. For those not eligible due to their work arrangements, such as those in irregular employment, the Government-Paid Paternity Benefit remains an option.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "shared_parental_leave__announcement_1",
+      "policy_name": "Shared Parental Leave",
+      "policy_category": "caregiving",
+      "article_type": "announcement",
+      "text": "Shared Parental Leave Scheme Expanded for New Parents\n\nThe Government has introduced a new Shared Parental Leave (SPL) scheme that gives parents up to 10 weeks of additional government-paid leave, shared between mother and father. The scheme, which replaces the previous one, offers 6 weeks of SPL for children born from April 2025, rising to 10 weeks from April 2026. Parents are entitled to 16 weeks of maternity leave and 4 weeks of paternity leave, in addition to the shared parental leave. This means parents of children born on or after April 2025 will have a combined maximum of 26 weeks of government-paid leave (16 weeks maternity + 4 weeks paternity + 6 weeks SPL), increasing to 30 weeks (16 + 4 + 10) for those born from April 2026 onwards. Parents unable to take SPL due to work arrangements can apply for the Shared Parental Leave Benefit, a cash-equivalent scheme.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "shared_parental_leave__explainer_1",
+      "policy_name": "Shared Parental Leave",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Shared Parental Leave Scheme Explained\n\nThe Shared Parental Leave (SPL) scheme offers parents up to 10 weeks of additional government-paid leave to share. For children born on or after 1 April 2025, parents receive a total of 26 weeks of government-paid leave: 16 weeks of maternity leave, 4 weeks of paternity leave, and 6 weeks of SPL. This increases to 30 weeks starting 1 April 2026, with the additional 10 weeks of SPL.\n\nParents can flexibly reallocate SPL entitlements. If eligible parents cannot take leave due to work arrangements, they can opt for the Shared Parental Leave Benefit, a cash-equivalent scheme.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "shared_parental_leave__explainer_2",
+      "policy_name": "Shared Parental Leave",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Shared Parental Leave Offers Additional Leave to Caring Parents\n\nParents with children born on or after 1 April 2025 can share up to 10 weeks of additional government-paid leave, with the benefit increasing gradually: 6 weeks from April 2025, rising to 10 weeks from April 2026. This leave can be combined with up to 16 weeks of maternity leave and 4 weeks of paternity leave, providing a total of 26 weeks (16 + 4 + 6) for a child born in 2025, or 30 weeks (16 + 4 + 10) for a child born in 2026. Parents can flexibly allocate these weeks between them or apply for a cash-equivalent Shared Parental Leave Benefit if their work arrangements do not allow for leave.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "shared_parental_leave__family_impact_1",
+      "policy_name": "Shared Parental Leave",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "New Shared Parental Leave Scheme Offers Families More Time Together\n\nA new Shared Parental Leave (SPL) scheme gives Singaporean parents more flexibility in caring for their newborns. For a couple having their first child after April 2025, they will receive a total of 26 weeks of government-paid leave. This includes 16 weeks of maternity leave for the mother, 4 weeks of paternity leave for the father, and an additional 6 weeks of shared leave that can be allocated between them as needed. For families welcoming a child after April 2026, the shared leave will increase to 10 weeks, bringing the total government-paid leave to 30 weeks.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "shared_parental_leave__family_impact_2",
+      "policy_name": "Shared Parental Leave",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "New Shared Parental Leave Scheme Provides Extended Government-Paid Leave for Parents\n\nA new Shared Parental Leave (SPL) scheme will provide up to 10 weeks of additional government-paid leave for parents, with phased-in benefits starting from April 2025. For a child born on or after 1 April 2025, parents will receive six weeks of SPL, bringing the total government-paid leave to 26 weeks. This includes 16 weeks of maternity leave and four weeks of paternity leave. For a child born on or after 1 April 2026, the SPL increases to 10 weeks, raising the total government-paid leave to 30 weeks. This flexibility allows parents to reallocate the leave as needed, ensuring both can take time off to care for their new child.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "shared_parental_leave__roundup_1",
+      "policy_name": "Shared Parental Leave",
+      "policy_category": "caregiving",
+      "article_type": "roundup",
+      "text": "Shared Parental Leave Scheme Provides Up to 30 Weeks of Additional Leave for New Parents\n\nThe Shared Parental Leave (SPL) scheme, already in place, provides up to 30 weeks of additional paid leave for new parents. For children born from 1 April 2025, parents can share 6 weeks of SPL on top of the existing 16 weeks of maternity leave and 4 weeks of paternity leave, totalling 26 weeks of government-paid leave. The SPL period rises to 10 weeks for children born from 1 April 2026, increasing the total government-paid leave to 30 weeks. Flexibility allows parents to reallocate their share of leave if required. Parents eligible for the SPL scheme include those in standard employment, while those in certain work arrangements may apply for the Shared Parental Leave Benefit, a cash-equivalent scheme.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "flexible_work_arrangement_request_guidelines__announcement_1",
+      "policy_name": "Flexible Work Arrangement Request Guidelines",
+      "policy_category": "caregiving",
+      "article_type": "announcement",
+      "text": "Tripartite Guidelines now require fair consideration of flexible work requests\n\nThe Tripartite Guidelines on Flexible Work Arrangement Requests, effective since 1 December 2024, mandate all employers to fairly evaluate formal requests for flexible work arrangements such as flexi-place (e.g. working from home), flexi-time (e.g. staggered start and end times), and flexi-load (e.g. reduced hours with commensurate pay), based on business needs. Employers are also required to communicate the outcomes of these requests clearly to employees. The Tripartite Alliance for Fair and Progressive Employment Practices (TAFEP) provides resources, templates, and workshops to assist companies in implementing these arrangements.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "flexible_work_arrangement_request_guidelines__explainer_1",
+      "policy_name": "Flexible Work Arrangement Request Guidelines",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Tripartite Guidelines Ensure Fair Consideration of Flexible Work Requests\n\nThe Tripartite Guidelines on Flexible Work Arrangement Requests, effective since 1 December 2024, require all employers to fairly consider formal requests from employees for flexible work arrangements such as flexi-place (e.g. working from home), flexi-time (e.g. flexible start and end times), and flexi-load (e.g. reduced hours with commensurate pay). The eligibility for such arrangements is not restricted to any specific group but must be based on business needs. Employers are required to properly communicate the outcomes of the requests. Resources, templates, and workshops provided by the Tripartite Alliance for Fair and Progressive Employment Practices (TAFEP) assist companies in implementing these guidelines effectively.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "flexible_work_arrangement_request_guidelines__explainer_2",
+      "policy_name": "Flexible Work Arrangement Request Guidelines",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Tripartite Guidelines Ensure Fair Consideration of Flexible Work Requests\n\nThe Tripartite Guidelines on Flexible Work Arrangement Requests, effective since 1 December 2024, require employers to fairly consider formal requests for flexible work arrangements such as flexi-place (e.g., working from home), flexi-time (e.g., staggered start and end times), and flexi-load (e.g., reduced hours with commensurate pay). Eligible employees include all workers who submit formal requests based on their needs, aligning with business requirements. Employers must communicate decisions clearly and provide resources and support through the Tripartite Alliance for Fair and Progressive Employment Practices (TAFEP) for assistance in implementation.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "flexible_work_arrangement_request_guidelines__family_impact_1",
+      "policy_name": "Flexible Work Arrangement Request Guidelines",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "Flexible Work Arrangements Made Easier for Singaporean Parents\n\nThe Tripartite Guidelines on Flexible Work Arrangement Requests, effective since 1 December 2024, require all employers to consider requests for flexible work arrangements such as flexi-place, flexi-time, and flexi-load based on business needs. A typical Singaporean family scenario involves a couple having their second child. The mother, a working professional in a firm with 20 employees, requests flexible work arrangements to balance her career and family needs. Under these guidelines, her employer must fairly consider her request for flexi-place (working from home one day a week) and flexi-time (adjusting her working hours). The employer is required to communicate the decision clearly, ensuring the working mother's request is handled according to the company's operational needs. TAFEP provides resources and templates to aid companies in implementing these flexible arrangements effectively.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "flexible_work_arrangement_request_guidelines__family_impact_2",
+      "policy_name": "Flexible Work Arrangement Request Guidelines",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "Flexible Work Arrangements Eased for Parents\n\nThe Tripartite Guidelines on Flexible Work Arrangement Requests, effective since 1 December 2024, mandate all employers to fairly consider formal requests for flexible work arrangements from employees, such as flexi-place (working from home), flexi-time (staggered start and end times), and flexi-load (reduced hours with commensurate pay). For instance, a working parent, Alex, who has a newborn and works full-time in an office, can request to shift to flexi-place, allowing them to work from home a few days a week to manage childcare. Alternatively, a parent, Jane, expecting her second child, can ask for flexi-time, scheduling her work hours to commence later in the morning to accommodate a morning school run for her older child. Employers are required to evaluate these requests based on business needs and communicate their decisions clearly to employees. The Tripartite Alliance for Fair and Progressive Employment Practices (TAFEP) provides resources, templates, and workshops to assist companies in implementing these flexible work arrangements effectively.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "flexible_work_arrangement_request_guidelines__roundup_1",
+      "policy_name": "Flexible Work Arrangement Request Guidelines",
+      "policy_category": "caregiving",
+      "article_type": "roundup",
+      "text": "Flexible Work Arrangements: Existing Guidelines for Fair Consideration\n\nThe Tripartite Guidelines on Flexible Work Arrangement Requests, which have been in effect since 1 December 2024, mandate that all employers fairly consider formal requests for flexible work arrangements such as flexi-place (e.g., working from home), flexi-time (e.g., staggered start and end times), and flexi-load (e.g., reduced hours with commensurate pay). These guidelines require employers to base their decisions on business needs and to clearly communicate their outcomes. The Tripartite Alliance for Fair and Progressive Employment Practices (TAFEP) offers resources, templates, and workshops to assist companies in implementing these flexible work options.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "preschool_and_infant_care_subsidies__announcement_1",
+      "policy_name": "Preschool & Infant Care Subsidies",
+      "policy_category": "caregiving",
+      "article_type": "announcement",
+      "text": "Preschool and Infant Care Subsidies Enhanced to Ease Burden on Working Parents\n\nThe Government has enhanced preschool and infant care subsidies, making full-day childcare more affordable for working parents. As of 9 December 2024, working mothers receive a Basic Subsidy of S$600 per month for full-day infant care and S$300 per month for full-day childcare. Additional Subsidies of up to S$710 for infant care and S$467 for childcare are available for households earning up to S$12,000 monthly. Since 9 December 2024, families with gross monthly household income up to S$6,000 qualify for full subsidies for their income tier, regardless of employment status. Full-day childcare fee caps at Government-supported centres were lowered by S$40 to S$640 (Anchor Operator) and S$680 (Partner Operator) per month, excluding GST, effective from 1 January 2025. Starting 1 January 2026, these fee caps will be further reduced by S$30 to S$610 and S$650 per month. By the end of 2025, 80% of preschoolers can secure a place in a Government-supported preschool, with close to 40,000 new infant and childcare places being developed from 2025 to 2029.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "preschool_and_infant_care_subsidies__explainer_1",
+      "policy_name": "Preschool & Infant Care Subsidies",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Preschool and Infant Care Subsidies Explained for Parents\n\nWorking mothers receive a Basic Subsidy of S$600 per month for full-day infant care and S$300 per month for full-day childcare. Additional Subsidies up to S$710 (infant care) and S$467 (childcare) are available for households earning up to S$12,000 per month. Since 9 December 2024, families with a gross monthly household income up to S$6,000 qualify for full subsidies regardless of employment status. Full-day childcare fee caps at Government-supported centres were lowered by S$40 from 1 January 2025 to S$640 (Anchor Operator) and S$680 (Partner Operator) per month excluding GST, and will be lowered further to S$610 and S$650 per month from 1 January 2026. By the end of 2025, 80% of preschoolers can have a place in a Government-supported preschool; close to 40,000 new infant and childcare places are being developed from 2025 to 2029.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "preschool_and_infant_care_subsidies__explainer_2",
+      "policy_name": "Preschool & Infant Care Subsidies",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Childcare Subsidies Enhanced, Fee Caps Lowered at Government-Supported Centres\n\nWorking parents, particularly mothers, receive a Basic Subsidy of S$600 per month for full-day infant care and S$300 for full-day childcare. Additional Subsidies of up to S$710 (infant care) and S$467 (childcare) per month are available for households earning up to S$12,000 monthly. Since 9 December 2024, families with a gross monthly household income up to S$6,000 qualify for full subsidies regardless of employment status. Full-day childcare fee caps at Government-supported centres were reduced by S$40 to S$640 (Anchor Operator) and S$680 (Partner Operator) per month, excluding GST, from 1 January 2025, and will decrease by a further S$30 to S$610 and S$650 from 1 January 2026. By the end of 2025, 80% of preschoolers will have a place in a Government-supported preschool, with close to 40,000 new infant and childcare places being developed from 2025 to 2029.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "preschool_and_infant_care_subsidies__family_impact_1",
+      "policy_name": "Preschool & Infant Care Subsidies",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "Enhanced Subsidies and Lowered Fees for Childcare\n\nA typical Singaporean family with a household income of S$6,000 per month and a second child entering full-day infant care receives a Basic Subsidy of S$600 per month. As they qualify for full Additional Subsidies under the new scheme, they receive an extra S$710 per month, bringing their total monthly subsidy to S$1,310. For their older child in full-day childcare, the family receives a Basic Subsidy of S$300 per month and Additional Subsidy of S$467 per month, totalling S$767. Hence, the family benefits from a combined subsidy of S$2,077 per month for their two children in childcare. Additionally, the full-day childcare fee cap at Government-supported centres was lowered to S$640 (Anchor Operator) and S$680 (Partner Operator) per month excluding GST as of 1 January 2025. By the end of 2025, 80% of preschoolers will have access to a place in a Government-supported preschool, making it more accessible for families like this one.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "preschool_and_infant_care_subsidies__roundup_1",
+      "policy_name": "Preschool & Infant Care Subsidies",
+      "policy_category": "caregiving",
+      "article_type": "roundup",
+      "text": "Preschool and Infant Care Subsidies Offer Working Parents Affordability\n\nPreschool and infant care subsidies are currently available, making full-day childcare more affordable for working parents. The Basic Subsidy for working mothers is S$600 per month for full-day infant care and S$300 per month for full-day childcare. Additional Subsidies of up to S$710 (infant care) and S$467 (childcare) per month are provided for households earning up to S$12,000. Families with gross monthly household income up to S$6,000 qualify for full subsidies regardless of employment status. Since 1 January 2025, full-day childcare fee caps at Government-supported centres are S$640 (Anchor Operator) and S$680 (Partner Operator) per month, excluding GST, and will be lowered to S$610 and S$650 from 1 January 2026. By the end of 2025, 80% of preschoolers will have a place in a Government-supported preschool, with 40,000 new infant and childcare places being developed from 2025 to 2029.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "infant_childminding_pilot__announcement_1",
+      "policy_name": "Infant Childminding Pilot",
+      "policy_category": "caregiving",
+      "article_type": "announcement",
+      "text": "Government Launches Infant Childminding Pilot for 2 to 18-Month-Olds\n\nThe Early Childhood Development Agency (ECDA) has launched a three-year pilot for home-based childminding services for infants aged two to 18 months, starting 1 December 2024. The scheme aims to offer parents an additional and flexible child care option beyond traditional centre-based care. Under the pilot, operators will appoint childminders to care for infants in a home setting. Parents are expected to pay around S$700 per month for full-time childminding, which is lower than current market rates.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "infant_childminding_pilot__explainer_1",
+      "policy_name": "Infant Childminding Pilot",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Infant Childminding Pilot Launches for 2 to 18-Month-Olds\n\nThe Infant Childminding Pilot, launched on 1 December 2024, offers home-based care for infants aged 2 to 18 months. This service is provided by childminders appointed by the Early Childhood Development Agency (ECDA) and serves as a flexible alternative to centre-based infant care. Parents can opt for full-time childminding under the pilot at an out-of-pocket cost of around S$700 per month, which is lower than the current average cost of most childminding services. This initiative aims to provide more options for families seeking infant care solutions.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "infant_childminding_pilot__explainer_2",
+      "policy_name": "Infant Childminding Pilot",
+      "policy_category": "caregiving",
+      "article_type": "explainer",
+      "text": "Infant Childminding Pilot Offers Lower-cost Home-based Care\n\nThe Infant Childminding Pilot, launched on 1 December 2024, provides home-based care for infants aged 2 to 18 months. Parents of eligible infants can opt for this service, which is operated by childminders appointed by the Early Childhood Development Agency (ECDA). The out-of-pocket expense for full-time childminding under the pilot is around S$700 per month, which is lower than the current market rates for most childminding services. This scheme offers parents a flexible alternative to centre-based infant care, enhancing the range of infant care options available.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "infant_childminding_pilot__family_impact_1",
+      "policy_name": "Infant Childminding Pilot",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "Infant Childminding Pilot Offers Affordable Home-Based Care for Young Toddlers\n\nA three-year infant childminding pilot launched on 1 December 2024, providing home-based care for infants aged 2 to 18 months as a flexible alternative to centre-based infant care. Under this scheme, parents can engage childminders appointed by the Early Childhood Development Agency (ECDA) at a cost of around S$700 per month for full-time care. For example, a family with a child aged 18 months would be eligible for this service, paying approximately S$700 monthly. This cost is lower than most current childminding services, offering a more affordable and flexible option for families.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "infant_childminding_pilot__family_impact_2",
+      "policy_name": "Infant Childminding Pilot",
+      "policy_category": "caregiving",
+      "article_type": "family_impact",
+      "text": "Infant Childminding Pilot Launches, Offering Affordable Home-Based Care\n\nA government-supported childminding pilot programme for infants aged 2 to 18 months was launched on 1 December 2024. Under this scheme, parents can opt for home-based childminding services provided by operators appointed by the Early Childhood Development Agency (ECDA). For a typical Singaporean family, a couple expecting their second child could choose this option, where their out-of-pocket expense for full-time childminding would be around S$700 per month. This cost is lower than most current infant care services, offering a more affordable and flexible alternative to centre-based infant care.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    },
+    {
+      "news_id": "infant_childminding_pilot__roundup_1",
+      "policy_name": "Infant Childminding Pilot",
+      "policy_category": "caregiving",
+      "article_type": "roundup",
+      "text": "Infant Childminding Pilot Offers Affordable Home-Based Care\n\nThe Infant Childminding Pilot, launched on 1 December 2024, continues to provide home-based care for infants aged 2 to 18 months. The Early Childhood Development Agency (ECDA) has appointed operators to engage childminders, offering parents an additional flexible infant care option. Parents can access the service for around S$700 per month, which is more affordable than most current childminding services. This initiative aims to support families seeking quality, full-time care for their infants in a home environment.",
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "temperature": 0.9
+    }
+  ],
+  "curation": {
+    "date": "2026-07-14",
+    "method": "number-diff of every article against its fact block + manual arithmetic check of all flagged articles across 3 generation rounds (see news_corpus_qwen_audit*.json for prior rounds)",
+    "removed": [
+      {
+        "news_id": "baby_bonus_and_child_development_account__family_impact_2",
+        "reason": "fabricated totals (S$23,000/S$38,000 not derivable from facts)"
+      },
+      {
+        "news_id": "baby_bonus_and_child_development_account__roundup_1",
+        "reason": "headline 'up to S$36,000' mixes 1st-child cash gift with 5th-child CDA cap"
+      },
+      {
+        "news_id": "preschool_and_infant_care_subsidies__family_impact_2",
+        "reason": "applies S$640 childcare fee cap to infant care ('pay only the fee cap' incoherent)"
+      }
+    ]
+  }
+}
