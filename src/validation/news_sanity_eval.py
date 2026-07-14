@@ -181,10 +181,11 @@ def build_report(articles, args):
 
     md = "\n".join(lines) + "\n"
     os.makedirs(ANALYSIS_DIR, exist_ok=True)
-    md_path = os.path.join(ANALYSIS_DIR, "news_sanity_eval.md")
+    suffix = f"_{args.label}" if getattr(args, "label", "") else ""
+    md_path = os.path.join(ANALYSIS_DIR, f"news_sanity_eval{suffix}.md")
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(md)
-    csv_path = os.path.join(ANALYSIS_DIR, "news_sanity_eval.csv")
+    csv_path = os.path.join(ANALYSIS_DIR, f"news_sanity_eval{suffix}.csv")
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["news_id", "policy", "article_type",
@@ -217,6 +218,10 @@ def main():
                         help="only articles whose policy name contains this")
     parser.add_argument("--type", dest="article_type", default=None,
                         help="only this article_type")
+    parser.add_argument("--label", default="",
+                        help="suffix for the report filenames (e.g. 'legacy' -> "
+                             "news_sanity_eval_legacy.md) so different corpora "
+                             "don't overwrite each other's reports")
     parser.add_argument("--report-only", action="store_true",
                         help="rebuild the report from existing cell runs, no LLM")
     args = parser.parse_args()
