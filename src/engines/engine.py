@@ -57,7 +57,8 @@ class Simulation:
 
     def __init__(self, agents, network, condition, llm, scorer,
                  news_schedule=None, output_dir=os.path.join("outputs", "runs"),
-                 run_name=None, verbose=True, concurrency=32, rerank_top_k=12):
+                 run_name=None, verbose=True, concurrency=32, rerank_top_k=12,
+                 gate_no_input=True):
         if condition not in CONDITIONS:
             raise ValueError(f"condition must be one of {list(CONDITIONS)}")
         self.agents = agents
@@ -69,6 +70,14 @@ class Simulation:
         # hybrid-mode cosine shortlist size per construct (passed to scorer.rerank)
         self.rerank_top_k = rerank_top_k
         self.news_schedule = news_schedule or {}
+        # Update gating: belief revision requires new evidence. When an agent
+        # receives no new inputs in a week (no policy news, no friend posts),
+        # skip its LLM update calls and carry the previous scores forward —
+        # the news sanity eval measured ~+0.05/week phantom attitude drift
+        # from updating on an unchanged information set (no-news control cell,
+        # outputs/analysis/news_corpus_results.md §3b). Disable with
+        # gate_no_input=False (driver --no-gating) to reproduce old behaviour.
+        self.gate_no_input = gate_no_input
         self.output_dir = output_dir
         self.run_name = run_name or f"run_{condition}"
         self.verbose = verbose
@@ -261,6 +270,19 @@ class Simulation:
                             agent, tweet.text, "social media post", "social_post",
                             timestep, source_agent_id=followed_id))
                         new_messages.append(f"[post by a friend] {tweet.text}")
+
+        # Gate: no new inputs this week -> no update. Carry the previous
+        # belief state forward as this week's belief_history entry (keeps
+        # trajectories week-aligned) and skip every LLM call: no retrieval,
+        # no TPB/intention update, no reflection, no post.
+        if self.gate_no_input and not new_lessons:
+            b = agent.belief_state
+            agent.update_belief_state(
+                b["attitude_score"], b["subjective_norm_score"], b["pbc_score"],
+                b["fertility_intention_dist"], timestep)
+            self._log(f"t={timestep} {agent.agent_id}: no new inputs, "
+                      f"gated (scores carried forward)")
+            return
 
         # 4-6. retrieval over existing + this week's freshly-perceived memories.
         # In hybrid mode, rerank() first cosine-shortlists candidates and LLM-judges

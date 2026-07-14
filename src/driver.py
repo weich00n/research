@@ -59,6 +59,10 @@ def main():
                              "gets LLM-reranked (union across constructs)")
     parser.add_argument("--num-agents", type=int, default=None,
                         help="limit to first N agents (for cheap test runs)")
+    parser.add_argument("--no-gating", action="store_true",
+                        help="disable update gating (run the belief-update LLM "
+                             "calls even in weeks with no new inputs — the "
+                             "pre-gating behaviour, kept for comparison runs)")
     parser.add_argument("--concurrency", type=int, default=32,
                         help="agents processed in parallel per week (concurrent LLM "
                              "requests); raise to saturate a vLLM server / 4 GPUs")
@@ -159,6 +163,7 @@ def main():
         run_name=run_name,
         concurrency=args.concurrency,
         rerank_top_k=args.rerank_top_k,
+        gate_no_input=not args.no_gating,
     )
 
     # Continue from the last completed week (0 for a fresh run). Seed init and
