@@ -55,10 +55,15 @@ TYPE_INSTRUCTIONS = {
     ),
     "family_impact": (
         "Illustrate what the scheme means for a typical Singaporean family, "
-        "using a clearly illustrative example computed only from the facts "
+        "using a clearly illustrative example built only from the facts "
         "provided (e.g. 'a couple having their second child would receive "
         "...'). Do not present the example as a real named family, and do not "
-        "invent surnames or quotes."
+        "invent surnames or quotes. Arithmetic rules: pick the amounts that "
+        "match the example's birth order / income tier exactly as stated in "
+        "the facts; if you state a total, it must be the exact sum of the "
+        "individual amounts you mention in the article; NEVER calculate "
+        "out-of-pocket costs, fees after subsidy, savings versus market "
+        "rates, or any figure not directly given in the facts."
     ),
     "roundup": (
         "Write a recap piece reminding readers that this existing scheme is "
@@ -100,11 +105,11 @@ FACT_BLOCKS = {
     ),
     "Child LifeSG Credits": (
         # Source: Budget 2025 (SG60 package) - not detailed in the M&P booklet.
-        "Announced at Budget 2025 as part of the SG60 package: S$500 in Child "
-        "LifeSG Credits for every Singapore Citizen child aged 12 and below "
-        "in 2025, disbursed via the LifeSG app, usable for daily household "
-        "and child-raising expenses such as groceries, pharmacy items and "
-        "transport."
+        "Announced at Budget 2025 as part of the SG60 package: a one-off "
+        "S$500 in Child LifeSG Credits for every Singapore Citizen child "
+        "aged 12 and below in 2025 (not an annual payment), disbursed via "
+        "the LifeSG app, usable for daily household and child-raising "
+        "expenses such as groceries, pharmacy items and transport."
     ),
     "Enhanced Paternity Leave": (
         "Government-Paid Paternity Leave (GPPL) is doubled from 2 to 4 weeks. "
@@ -212,18 +217,27 @@ SYSTEM_PROMPT = (
     "schemes. Write in British/Singapore English. Use ONLY the facts "
     "provided to you. Do not invent statistics, survey results, take-up "
     "figures, named people, officials, or quotes. Do not editorialise or "
-    "give opinions. Output the article only: a headline on the first line, "
-    "then the body."
+    "give opinions. Amounts and dates must be copied exactly from the facts "
+    "provided; any total you state must equal the sum of the individual "
+    "amounts you mention. Output the article only: a headline on the first "
+    "line, then the body."
 )
 
 
+def _is_short_fact_block(policy_name):
+    """Policies with thin fact blocks (e.g. Child LifeSG Credits) can't honestly
+    fill 120+ words without padding beyond the facts - ask for less."""
+    return len(FACT_BLOCKS[policy_name].split()) < 60
+
+
 def build_user_prompt(policy, article_type):
+    length = "80-150" if _is_short_fact_block(policy.name) else "120-200"
     return (
         f"Scheme: {policy.name}\n"
         f"Summary: {policy.description}\n"
         f"Facts you may use (use only these):\n{FACT_BLOCKS[policy.name]}\n\n"
         f"Task: {TYPE_INSTRUCTIONS[article_type]}\n"
-        f"Length: 120-200 words. Headline on the first line, then the body. "
+        f"Length: {length} words. Headline on the first line, then the body. "
         f"No other text.\n\n"
         f"Here are two examples of the expected style (different schemes - "
         f"do not reuse their content):\n{STYLE_EXAMPLES}"
@@ -233,8 +247,9 @@ def build_user_prompt(policy, article_type):
 def lint_article(text, policy_name):
     """Return None if the article passes, else the reason it fails."""
     words = len(text.split())
-    if not (WORD_MIN <= words <= WORD_MAX):
-        return f"length {words} words outside [{WORD_MIN}, {WORD_MAX}]"
+    word_min = 55 if _is_short_fact_block(policy_name) else WORD_MIN
+    if not (word_min <= words <= WORD_MAX):
+        return f"length {words} words outside [{word_min}, {WORD_MAX}]"
     lower = text.lower()
     if not any(term in lower for term in KEY_TERMS[policy_name]):
         return f"missing key term for {policy_name!r}"
