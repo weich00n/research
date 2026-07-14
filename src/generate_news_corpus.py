@@ -60,10 +60,11 @@ TYPE_INSTRUCTIONS = {
         "...'). Do not present the example as a real named family, and do not "
         "invent surnames or quotes. Arithmetic rules: pick the amounts that "
         "match the example's birth order / income tier exactly as stated in "
-        "the facts; if you state a total, it must be the exact sum of the "
-        "individual amounts you mention in the article; NEVER calculate "
-        "out-of-pocket costs, fees after subsidy, savings versus market "
-        "rates, or any figure not directly given in the facts."
+        "the facts; if the facts provide a precomputed total, use that total "
+        "rather than computing your own; if you state a total, it must be the "
+        "exact sum of the individual amounts you mention in the article; "
+        "NEVER calculate out-of-pocket costs, fees after subsidy, savings "
+        "versus market rates, or any figure not directly given in the facts."
     ),
     "roundup": (
         "Write a recap piece reminding readers that this existing scheme is "
@@ -86,7 +87,11 @@ FACT_BLOCKS = {
         "parents' savings up to S$4,000 (first child), S$7,000 (second), "
         "S$9,000 (third and fourth), S$15,000 (fifth and beyond). CDA funds "
         "are usable at Baby Bonus Approved Institutions for childcare, "
-        "preschool and healthcare expenses of the child or their siblings."
+        "preschool and healthcare expenses of the child or their siblings. "
+        "Total Government contributions to the CDA (First Step Grant plus "
+        "maximum co-matching): S$9,000 for the first child, S$12,000 for the "
+        "second, S$19,000 for the third and fourth, S$25,000 for the fifth "
+        "and beyond."
     ),
     "Large Family Scheme": (
         "The Large Families Scheme supports couples with, or aspiring to, "
@@ -129,7 +134,11 @@ FACT_BLOCKS = {
         "born on or after 1 Apr 2025, rising to 10 weeks for children born on "
         "or after 1 Apr 2026. Parents not eligible because of their work "
         "arrangements may apply for the Shared Parental Leave Benefit, a "
-        "cash-equivalent scheme."
+        "cash-equivalent scheme. Combined maximum government-paid leave for "
+        "both parents together: 16 weeks maternity + 4 weeks paternity + "
+        "6 weeks SPL = 26 weeks in total for a child born on or after "
+        "1 Apr 2025; 16 + 4 + 10 = 30 weeks in total for a child born on or "
+        "after 1 Apr 2026."
     ),
     "Flexible Work Arrangement Request Guidelines": (
         "The Tripartite Guidelines on Flexible Work Arrangement Requests, in "
