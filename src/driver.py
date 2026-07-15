@@ -50,6 +50,16 @@ def main():
                              "(generate_news_corpus.py output); each week then serves "
                              "a distinct factual article instead of the verbatim "
                              "announce/remind text. Default: legacy behaviour")
+    parser.add_argument("--context-corpus", default=None,
+                        help="ambient context corpus (generate_context_corpus.py "
+                             "output); appends one context article per week. With "
+                             "--news-corpus absent, the schedule is context-only "
+                             "(the no-policy background arm)")
+    parser.add_argument("--context-mix", choices=["balanced", "negative",
+                                                  "positive", "neutral"],
+                        default="balanced",
+                        help="context draw pool: balanced (realistic mix) or a "
+                             "pure valence (headwind/tailwind/placebo arms)")
     parser.add_argument("--relevance-mode", choices=["llm", "cosine", "hybrid"], default="llm",
                         help="how memory TPB relevance is scored: 'llm' (judge every "
                              "memory at creation), 'cosine' (embedding similarity), or "
@@ -150,7 +160,9 @@ def main():
     if policy_on:
         category = None if args.policy_category == "combined" else args.policy_category
         news_schedule = build_news_schedule(args.timesteps, category=category,
-                                            corpus_path=args.news_corpus)
+                                            corpus_path=args.news_corpus,
+                                            context_corpus_path=args.context_corpus,
+                                            context_mix=args.context_mix)
 
     sim = Simulation(
         agents=agents,

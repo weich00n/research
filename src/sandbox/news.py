@@ -11,9 +11,18 @@ import itertools
 import json
 import random
 
-from sandbox.policy import get_policies
+from sandbox.policy import Policy, get_policies
 
 RANDOM_STATE = 42
+
+CONTEXT_MIXES = ("balanced", "negative", "positive", "neutral")
+
+
+def context_policy(topic):
+    """Stub Policy for ambient context articles (cost of living, housing,
+    job market, ...): not a treatment instrument, no expected pathways."""
+    return Policy(name=topic, category="context", description="",
+                  expected_pathways=[])
 
 _id_counter = itertools.count(1)
 
@@ -83,8 +92,32 @@ def _build_variant_queues(corpus, seed):
     return queues
 
 
+def _build_context_queue(corpus_path, mix, seed):
+    """Seeded, deterministic serving order for context articles.
+
+    `mix` picks the draw pool: a pure valence ('negative'/'positive'/
+    'neutral') or 'balanced' (all articles, natural corpus ratio). Sorted by
+    news_id before shuffling so the order is reproducible regardless of file
+    order; a separate RNG stream (seed+1) keeps the policy-article draw
+    identical whether or not context is enabled.
+    """
+    if mix not in CONTEXT_MIXES:
+        raise ValueError(f"context_mix must be one of {CONTEXT_MIXES}")
+    with open(corpus_path, encoding="utf-8") as f:
+        data = json.load(f)
+    articles = data["articles"] if isinstance(data, dict) else data
+    pool = sorted((a for a in articles
+                   if mix == "balanced" or a.get("valence") == mix),
+                  key=lambda a: a["news_id"])
+    if not pool:
+        raise ValueError(f"no context articles for mix {mix!r} in {corpus_path}")
+    random.Random(seed + 1).shuffle(pool)
+    return pool
+
+
 def build_news_schedule(num_timesteps, category=None, start_timestep=1,
-                        corpus_path=None, seed=RANDOM_STATE):
+                        corpus_path=None, seed=RANDOM_STATE,
+                        context_corpus_path=None, context_mix="balanced"):
     """Map timestep -> list[News], cycling through the chosen policy scenario.
 
     One policy news item is broadcast to all agents each week, in a fixed
@@ -103,27 +136,46 @@ def build_news_schedule(num_timesteps, category=None, start_timestep=1,
     fresh announcements — re-"announcing" a policy the agent already knows
     reads as new evidence every week and ratchets beliefs monotonically
     toward the scale ceiling.
+
+    With `context_corpus_path` (generate_context_corpus.py output), one
+    ambient context article is appended to each week's items, drawn without
+    repetition from the pool selected by `context_mix` ('balanced' /
+    'negative' / 'positive' / 'neutral'). **Context-only mode:** if
+    `corpus_path` is None while `context_corpus_path` is given, the schedule
+    contains context articles only (no policy items) — the no-policy
+    background arm for the situation factorial.
     """
+    context_only = context_corpus_path is not None and corpus_path is None
     policies = get_policies(category)
     if not policies:
         raise ValueError(f"No policies for category {category!r}")
     queues = _build_variant_queues(load_news_corpus(corpus_path), seed) \
         if corpus_path else {}
+    context_queue = _build_context_queue(context_corpus_path, context_mix, seed) \
+        if context_corpus_path else []
     schedule = {}
     for i, t in enumerate(range(start_timestep, start_timestep + num_timesteps)):
-        policy = policies[i % len(policies)]
-        text, news_id, article_type = None, None, None
-        queue = queues.get(policy.name)
-        if queue:
-            entry = queue.pop(0)
-            text = entry["text"]
-            news_id = entry["news_id"]
-            article_type = entry["article_type"]
-        elif i >= len(policies):  # legacy repeat cycle: remind, don't re-announce
-            text = (
-                f"News this week: a reminder of the {policy.name}, which the "
-                f"Singapore Government announced earlier. {policy.description}"
-            )
-        schedule[t] = [News(policy, t, text=text, news_id=news_id,
-                            article_type=article_type)]
+        items = []
+        if not context_only:
+            policy = policies[i % len(policies)]
+            text, news_id, article_type = None, None, None
+            queue = queues.get(policy.name)
+            if queue:
+                entry = queue.pop(0)
+                text = entry["text"]
+                news_id = entry["news_id"]
+                article_type = entry["article_type"]
+            elif i >= len(policies):  # legacy repeat cycle: remind, don't re-announce
+                text = (
+                    f"News this week: a reminder of the {policy.name}, which the "
+                    f"Singapore Government announced earlier. {policy.description}"
+                )
+            items.append(News(policy, t, text=text, news_id=news_id,
+                              article_type=article_type))
+        if context_queue:  # exhausted pool -> no context that week (never crash)
+            entry = context_queue.pop(0)
+            items.append(News(context_policy(entry["policy_name"]), t,
+                              text=entry["text"], news_id=entry["news_id"],
+                              article_type=entry["article_type"]))
+        schedule[t] = items
     return schedule
