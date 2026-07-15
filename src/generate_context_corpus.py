@@ -23,6 +23,7 @@ import argparse
 import datetime
 import json
 import os
+import re
 
 from generate_news_corpus import TPB_TERMS, WORD_MAX, WORD_MIN
 from utils.generate_utils import LLMClient
@@ -212,6 +213,8 @@ def lint_article(text, topic):
     for term in POLICY_TERMS:
         if term in lower:
             return f"mentions fertility-policy term {term!r}"
+    if re.search(r'["“”].{10,}?["“”]', text):
+        return "contains quoted speech (invented quotes are banned)"
     return None
 
 
