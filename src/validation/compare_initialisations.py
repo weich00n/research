@@ -144,7 +144,7 @@ def main():
                         help="Nemotron-initialised agents JSON")
     parser.add_argument("--llama", default="agents_llama_initialised.json",
                         help="Llama-initialised agents JSON")
-    parser.add_argument("--out", default="outputs/analysis/initialisation_comparison.csv",
+    parser.add_argument("--out", default="outputs/analysis/baseline/initialisation_comparison.csv",
                         help="Per-agent comparison CSV")
     args = parser.parse_args()
 

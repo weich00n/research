@@ -42,7 +42,7 @@ from validation.plot_trajectories import tidy
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
-ANALYSIS = os.path.join(OUT, "analysis")
+ANALYSIS = os.path.join(OUT, "analysis", "dashboards")
 
 SATURATION_THRESHOLD = 4.8  # matches plot_trajectories' ratchet ceiling check
 

@@ -37,7 +37,7 @@ from utils.generate_utils import EmbeddingClient
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
 RUNS = os.path.join(OUT, "runs")
-ANALYSIS = os.path.join(OUT, "analysis")
+ANALYSIS = os.path.join(OUT, "analysis", "relevance_validation")
 # Mirror the cosine/hybrid scorer: use the recall-broadened embed anchors.
 CONSTRUCTS = list(CONSTRUCT_EMBED_PROMPTS)  # ['attitude', 'norm', 'pbc']
 

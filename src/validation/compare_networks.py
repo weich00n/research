@@ -53,7 +53,7 @@ def main():
     ap.add_argument("--networks", nargs="+", required=True)
     ap.add_argument("--labels", nargs="+", default=None)
     ap.add_argument("--agents", default=str(ROOT / "agents_final_100.json"))
-    ap.add_argument("--out-dir", default=str(ROOT / "outputs/analysis"))
+    ap.add_argument("--out-dir", default=str(ROOT / "outputs/analysis/network_validation"))
     args = ap.parse_args()
 
     labels = args.labels or [Path(p).stem for p in args.networks]

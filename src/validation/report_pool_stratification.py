@@ -33,7 +33,7 @@ from build_final_agents import (  # noqa: E402  (path set above)
 
 DEFAULT_AGENTS = os.path.join(ROOT, "agents_final_100.json")
 DEFAULT_REPORT = os.path.join(ROOT, "reports", "agent_pool_mp_stratification.md")
-DEFAULT_CSV = os.path.join(ROOT, "outputs", "analysis", "pool_stratification_cells.csv")
+DEFAULT_CSV = os.path.join(ROOT, "outputs", "analysis", "baseline", "pool_stratification_cells.csv")
 
 AGE_BANDS = ["21-25", "26-30", "31-35", "36-40", "41-45"]
 EDU_BUCKETS = ["Secondary and below", "Diploma / A-Level", "Degree and above"]

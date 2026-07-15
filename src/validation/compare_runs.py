@@ -44,7 +44,7 @@ from utils.generate_utils import EmbeddingClient
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
 RUNS = os.path.join(OUT, "runs")
-ANALYSIS = os.path.join(OUT, "analysis")
+ANALYSIS = os.path.join(OUT, "analysis", "run_comparisons")
 CONSTRUCTS = list(CONSTRUCT_PROMPTS)  # ['attitude', 'norm', 'pbc']
 SAMPLE_AGENTS = ["agent_001", "agent_050", "agent_100"]  # for the grounding section
 LOG_TS_FMT = "%Y-%m-%d %H:%M:%S"

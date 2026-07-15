@@ -164,7 +164,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--network", default=str(ROOT / "outputs/networks/social_network_qwen.json"))
     ap.add_argument("--agents", default=str(ROOT / "agents_final_100.json"))
-    ap.add_argument("--out-dir", default=str(ROOT / "outputs/analysis"))
+    ap.add_argument("--out-dir", default=str(ROOT / "outputs/analysis/network_validation"))
     args = ap.parse_args()
 
     network = load_json(args.network)

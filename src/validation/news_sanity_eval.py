@@ -27,6 +27,9 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+if hasattr(sys.stdout, "reconfigure"):  # Windows cp1252 console can't print Δ
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from engines.engine import Simulation
 from LLM_judge import RelevanceScorer
 from sandbox.agent import load_agents
@@ -42,7 +45,7 @@ ROOT = os.path.join(HERE, "..", "..")
 DEFAULT_CORPUS = os.path.join(ROOT, "outputs", "news", "news_corpus_qwen.json")
 DEFAULT_AGENTS = os.path.join(ROOT, "agents_final_100_seeded.json")
 RUNS_DIR = os.path.join(ROOT, "outputs", "runs", "sanity")
-ANALYSIS_DIR = os.path.join(ROOT, "outputs", "analysis")
+ANALYSIS_DIR = os.path.join(ROOT, "outputs", "analysis", "news_validation")
 
 CONSTRUCTS = [("attitude", "attitude_score"),
               ("norm", "subjective_norm_score"),

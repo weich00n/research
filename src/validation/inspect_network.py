@@ -51,7 +51,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--network", default=DEFAULT_NETWORK)
     ap.add_argument("--agents", default=DEFAULT_AGENTS)
-    ap.add_argument("--report", default=os.path.join(ROOT, "outputs", "analysis", "network_inspection.md"))
+    ap.add_argument("--report", default=os.path.join(ROOT, "outputs", "analysis", "network_validation", "network_inspection.md"))
     args = ap.parse_args()
 
     net = load_network(args.network)

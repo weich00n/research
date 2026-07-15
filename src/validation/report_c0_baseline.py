@@ -37,7 +37,7 @@ from compare_runs import expected_intention, json_validity, seed_texts  # noqa: 
 
 DEFAULT_RUN = os.path.join(ROOT, "outputs", "runs", "run_C0_Qwen.json")
 DEFAULT_REPORT = os.path.join(ROOT, "reports", "c0_initialised_baseline.md")
-DEFAULT_CSV = os.path.join(ROOT, "outputs", "analysis", "c0_baseline_per_agent.csv")
+DEFAULT_CSV = os.path.join(ROOT, "outputs", "analysis", "baseline", "c0_baseline_per_agent.csv")
 
 CONSTRUCTS = [("attitude", "attitude_score"),
               ("subjective norm", "subjective_norm_score"),

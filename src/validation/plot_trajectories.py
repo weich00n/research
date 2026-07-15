@@ -49,7 +49,7 @@ from validation.compare_runs import expected_intention, load_run
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "..", "outputs")  # src/validation/ -> repo root
 RUNS = os.path.join(OUT, "runs")
-ANALYSIS = os.path.join(OUT, "analysis")
+ANALYSIS = os.path.join(OUT, "analysis", "trajectories")
 
 DEFAULT_RUNS = ["c2_llm_100.json", "c2_hybrid_100.json", "c2_cosine_100.json"]
 DEFAULT_LABELS = ["llm", "hybrid", "cosine"]
