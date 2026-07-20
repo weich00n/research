@@ -86,5 +86,47 @@ run run_C1_Qwen \
 run run_C3_Qwen \
   --condition C3 --network "$NETWORK" --news-corpus "$NEWS_CORPUS"
 
+# --- added 2026-07-21 ---
+
+# Replicate of run_C2_financial with a fresh run-name (same everything else,
+# stochastic LLM sampling only) — stability check: is the financial
+# specificity finding a stable pattern or this-run's luck?
+run run_C2_financial_rep2 \
+  --condition C2 --news-corpus "$NEWS_CORPUS" --policy-category financial
+
+# C3 + balanced ambient context — does the same intervention that broke
+# C2's ratchet also break C1/C3's echo-chamber norm saturation?
+run run_C3_ambient \
+  --condition C3 --network "$NETWORK" --news-corpus "$NEWS_CORPUS" \
+  --context-corpus "$CONTEXT_CORPUS" --context-mix balanced
+
+# Replicate of run_C2_caregiving — pairs with the financial replicate above
+# so the stability check covers both policy categories, not just one.
+run run_C2_caregiving_rep2 \
+  --condition C2 --news-corpus "$NEWS_CORPUS" --policy-category caregiving
+
+# C1 + balanced ambient context — pairs with run_C3_ambient. C1_fixed's
+# norm saturation (96%) was even worse than C3's (91%), so this checks
+# whether ambient context resolves the pure-social echo chamber too, not
+# just the policy+social one.
+#
+# NOTE the flags: --condition C3 (NOT C1), --news-corpus omitted. The engine
+# only ever reads the news schedule when policy_on=True (engine.py:393), and
+# C1 has policy_on=False by definition -- so plain `--condition C1
+# --context-corpus ...` would silently deliver ZERO context (wasted GPU
+# time, looks identical to run_C1_Qwen). To get "social + ambient context,
+# no real policy" you need social_on=True (only C1/C3 have it) AND
+# policy_on=True (to make the engine read the schedule at all) -- C3 is the
+# only condition with both. Omitting --news-corpus then makes
+# build_news_schedule fall into its dedicated context_only branch
+# (news.py:148: `context_only = context_corpus_path is not None and
+# corpus_path is None`) -- zero policy text, context articles only, exactly
+# like run_context_only did under --condition C2 in the first batch. The
+# saved run JSON's condition field will literally say "C3" despite carrying
+# no policy content -- same documented quirk as run_context_only, not a bug.
+run run_C1_ambient \
+  --condition C3 --network "$NETWORK" \
+  --context-corpus "$CONTEXT_CORPUS" --context-mix balanced
+
 echo
-echo "All 6 runs complete. Outputs in $RUNS_DIR/{run_C2_financial,run_C2_financial_ambient,run_C2_caregiving,run_C2_caregiving_ambient,run_C1_Qwen,run_C3_Qwen}.json"
+echo "All 10 runs complete. Outputs in $RUNS_DIR/{run_C2_financial,run_C2_financial_ambient,run_C2_caregiving,run_C2_caregiving_ambient,run_C1_Qwen,run_C3_Qwen,run_C2_financial_rep2,run_C3_ambient,run_C2_caregiving_rep2,run_C1_ambient}.json"
