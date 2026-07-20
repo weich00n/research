@@ -358,10 +358,39 @@ from persona text. `financial_security_score` = the unanimous consensus value
 `financial_security_reasoning` = gpt-4o-mini's text. Each agent additionally
 carries provenance fields ignored by `sandbox.agent.Agent`: `source_persona_id`,
 `uuid`, `fin_consensus_n_raters`, `fin_consensus_spread`. The `agents_final_100`
-social network must be regenerated (`generate_social_network.py`, output under
-`outputs/networks/`) before C1/C3 — the old `social_network.json` was built for
-the 200 v1 agents.
+social network has been regenerated and validated: C1/C3 use
+`outputs/networks/social_network_qwen_noarea.json` (demographics-only,
+planning-area field ablated — see
+`outputs/analysis/network_validation/network_area_decision.md`).
 ---
+
+## Session Handoff (any device — read this first in a new session)
+
+The project moves between a Windows laptop, a Mac, and a GPU server; the repo
+folder syncs via OneDrive. An AI agent starting fresh on ANY device should
+read, in order:
+
+1. **`docs/agent_memory/MEMORY.md`** — index of the working-memory notes
+   (decisions, gotchas, live status), exported from the primary agent's
+   memory on 2026-07-15. `c2-tpb-ratchet-drift.md` is the live status note.
+2. **`outputs/README.md`** — map of the outputs tree; canonical artifacts
+   marked ►.
+3. **`outputs/analysis/progress_summary_network_to_news.md`** — chronological
+   record of every validation, result, and decision (9–15 Jul 2026), with a
+   TL;DR and the current run queue.
+
+Platform notes:
+- The `.venv/` in this folder is **Windows-only**. Do not delete it (OneDrive
+  propagates deletions); on Mac create a venv outside OneDrive
+  (`python3 -m venv ~/.venvs/research`).
+- LLM runs execute on the GPU server (school vLLM, Qwen2.5-14B, ports
+  8101–8104 via `serve_qwen.sh`); the server is password-SSH only, so agents
+  hand one-line commands to the user. Files move laptop↔server via OneDrive
+  sync and/or git (note: `outputs/` is gitignored except force-added
+  artifacts).
+- The VacSim reference clone is per-device (Windows: `C:\Users\chong\VacSim`;
+  elsewhere clone github.com/abehou/VacSim to `~/VacSim`, outside OneDrive).
+- Commits are authored by the user only — never add AI co-author lines.
 
 ## References (Short Form)
 - Singapore TFR 2025: 0.87 (SingStat)
