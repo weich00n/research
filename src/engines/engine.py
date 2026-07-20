@@ -275,7 +275,17 @@ class Simulation:
         # belief state forward as this week's belief_history entry (keeps
         # trajectories week-aligned) and skip every LLM call: no retrieval,
         # no TPB/intention update, no reflection, no post.
-        if self.gate_no_input and not new_lessons:
+        #
+        # Exception: week 1 of a social-on condition is never gated, even if
+        # this agent has no friend posts yet (nobody can, on week 1 -- no one
+        # has posted before). Posting only happens past the gate (step 8), so
+        # without this exception a social-only run deadlocks permanently: no
+        # one can post in week 1 -> no one has anything to read in week 2 ->
+        # no one can post in week 2 -> ... (found via run_C1_Qwen, 2026-07-20:
+        # 0/100 agents moved across 12 weeks). This unblocks exactly that
+        # first week; C2/C3 are unaffected since policy news already keeps
+        # the gate open in week 1 regardless.
+        if self.gate_no_input and not new_lessons and not (social_on and timestep == 1):
             b = agent.belief_state
             agent.update_belief_state(
                 b["attitude_score"], b["subjective_norm_score"], b["pbc_score"],
