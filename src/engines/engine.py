@@ -27,6 +27,7 @@ from utils.logging_utils import setup_logger
 from sandbox.prompts import (
     build_baseline_intention_prompt,
     build_baseline_tpb_prompt,
+    build_batch_perception_prompt,
     build_intention_update_prompt,
     build_perception_prompt,
     build_seed_memory_prompt,
@@ -238,6 +239,50 @@ class Simulation:
             cosine_relevance=cos,
         )
 
+    def _build_perceived_batch(self, agent, items, message_kind, source_type, timestep):
+        """Batched sibling of _build_perceived: turns a WEEK's worth of
+        same-kind messages into distinct, deduplicated relevance-scored
+        memories in ONE call (VacSim's feed_tweets() -> generate_and_save_
+        lessons() pattern), instead of one call per message. Several
+        followed agents posting similar content in the same week can then
+        collapse into a single takeaway instead of each independently
+        filling a construct's retrieval slots.
+
+        `items` is [(source_agent_id, text), ...]. Returns a list of Lessons
+        (not attached — same COMPUTE-then-COMMIT contract as _build_perceived).
+        A memory whose source_indices resolve to exactly one input item keeps
+        that item's source_agent_id; a genuine cross-item merge gets
+        source_agent_id=None (no analysis code keys off this field today, so
+        losing provenance on the rare merged case is safe).
+        """
+        numbered = list(enumerate((text for _, text in items), start=1))
+        system, user = build_batch_perception_prompt(agent, numbered, message_kind)
+        out = self._chat_json(system, user)
+        # Same tolerant-of-a-bare-list handling as initialise_seed_memories,
+        # for the same reason: don't crash a long run on one off-format reply.
+        memories = out.get("memories", out) if isinstance(out, dict) else out
+        if not isinstance(memories, list):
+            raise ValueError(
+                f"{agent.agent_id}: batch perception response not a list "
+                f"of memories: {out!r}")
+        lessons = []
+        for mem in memories:
+            indices = mem.get("source_indices") or []
+            source_agent_id = items[indices[0] - 1][0] if len(indices) == 1 else None
+            rel, cos = self.scorer.creation_scores(mem["memory_text"])
+            lessons.append(Lesson(
+                agent_id=agent.agent_id,
+                memory_text=mem["memory_text"],
+                created_timestep=timestep,
+                source_type=source_type,
+                importance=mem.get("importance", 0.5),
+                memory_class="simulation",
+                source_agent_id=source_agent_id,
+                relevance=rel,
+                cosine_relevance=cos,
+            ))
+        return lessons
+
     def _run_agent_week(self, agent, timestep, news_items):
         """Run one CLAUDE.md week (steps 1-8) for a single agent.
 
@@ -260,16 +305,22 @@ class Simulation:
                 self._build_perceived(agent, news.text, "news report", "policy_news", timestep))
             new_messages.append(f"[policy news] {news.text}")
 
-        # 2. social posts from followed agents, posted at t-1
+        # 2. social posts from followed agents, posted at t-1 — batched into
+        # ONE perception call for the week (see _build_perceived_batch),
+        # instead of one call per tweet, so several friends posting similar
+        # content collapses into one takeaway rather than each independently
+        # flooding a construct's retrieval slots.
         if social_on:
+            tweet_items = []
             for followed_id in self.network.get(agent.agent_id, []):
                 followed = self.agents_by_id[followed_id]
                 for tweet in followed.tweets:
                     if tweet.created_timestep == timestep - 1:
-                        new_lessons.append(self._build_perceived(
-                            agent, tweet.text, "social media post", "social_post",
-                            timestep, source_agent_id=followed_id))
+                        tweet_items.append((followed_id, tweet.text))
                         new_messages.append(f"[post by a friend] {tweet.text}")
+            if tweet_items:
+                new_lessons.extend(self._build_perceived_batch(
+                    agent, tweet_items, "social media posts", "social_post", timestep))
 
         # Gate: no new inputs this week -> no update. Carry the previous
         # belief state forward as this week's belief_history entry (keeps
