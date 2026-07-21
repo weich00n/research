@@ -5,5 +5,8 @@ history
 test.py
 outputs
 docs
+docs/agent_memory
 reports
 *.pyc
+.DS_Store
+.claude

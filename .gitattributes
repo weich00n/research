@@ -1,0 +1,11 @@
+# Normalize line endings to LF in the repository regardless of which OS
+# last touched a file. This repo syncs via OneDrive across a Windows
+# laptop, a Mac, and a GPU server — without this, editors/git on each
+# device flip line endings back and forth and every file looks modified.
+* text=auto eol=lf
+
+# Binary/generated artifacts: never touch line endings.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
