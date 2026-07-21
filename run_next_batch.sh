@@ -130,3 +130,8 @@ run run_C1_ambient \
 
 echo
 echo "All 10 runs complete. Outputs in $RUNS_DIR/{run_C2_financial,run_C2_financial_ambient,run_C2_caregiving,run_C2_caregiving_ambient,run_C1_Qwen,run_C3_Qwen,run_C2_financial_rep2,run_C3_ambient,run_C2_caregiving_rep2,run_C1_ambient}.json"
+
+  run_C1_ambient
+scp chongweichoon@10.193.104.168:/data1/chongweichoon/research/outputs/runs/run_C1_ambient.json .
+scp chongweichoon@10.193.104.168:/data1/chongweichoon/research/outputs/runs/run_C1_ambient.log .
+scp chongweichoon@10.193.104.168:/data1/chongweichoon/research/outputs/runs/run_C1_ambient.batch.log .

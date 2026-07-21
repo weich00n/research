@@ -44,7 +44,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..", "..")
 DEFAULT_CORPUS = os.path.join(ROOT, "outputs", "news", "news_corpus_qwen.json")
 DEFAULT_AGENTS = os.path.join(ROOT, "agents_final_100_seeded.json")
-RUNS_DIR = os.path.join(ROOT, "outputs", "runs", "sanity")
+BASE_RUNS_DIR = os.path.join(ROOT, "outputs", "runs", "sanity")
+# Reassigned in main() from --label so cell run JSONs for different models
+# don't collide (e.g. sanity/qwen2.5-14b/sanity_N0001.json vs
+# sanity/llama-3.1-8b/sanity_N0001.json). Unlabeled runs keep the original
+# flat path for backward compatibility with existing Qwen sanity results.
+RUNS_DIR = BASE_RUNS_DIR
 ANALYSIS_DIR = os.path.join(ROOT, "outputs", "analysis", "news_validation")
 
 CONSTRUCTS = [("attitude", "attitude_score"),
@@ -222,12 +227,20 @@ def main():
     parser.add_argument("--type", dest="article_type", default=None,
                         help="only this article_type")
     parser.add_argument("--label", default="",
-                        help="suffix for the report filenames (e.g. 'legacy' -> "
-                             "news_sanity_eval_legacy.md) so different corpora "
-                             "don't overwrite each other's reports")
+                        help="tags this run: (1) cell run JSONs go under "
+                             "outputs/runs/sanity/<label>/ instead of the flat "
+                             "default dir, so e.g. --label llama-3.1-8b doesn't "
+                             "overwrite --label qwen2.5-14b's cells; (2) suffixes "
+                             "the report filenames (news_sanity_eval_<label>.md/"
+                             ".csv) so reports don't overwrite each other either. "
+                             "Use one label per model/corpus variant.")
     parser.add_argument("--report-only", action="store_true",
                         help="rebuild the report from existing cell runs, no LLM")
     args = parser.parse_args()
+
+    global RUNS_DIR
+    if args.label:
+        RUNS_DIR = os.path.join(BASE_RUNS_DIR, args.label)
 
     articles = load_cells(args.corpus, args.ids, args.policy, args.article_type)
     if not articles:
