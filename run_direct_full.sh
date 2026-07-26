@@ -5,13 +5,20 @@
 # GPU server overnight -- it's sequential and each run checkpoints per-week.
 #
 # Arms:
-#   run_C0_direct                    static baseline (no policy, no social)
-#   run_C1_direct                    social only
-#   run_C2_direct                    policy only, just news (combined category)
-#   run_C3_direct                    policy + social, just news
-#   run_C3_direct_ambient_combined   policy + social, news + ambient context together
-#   run_C3_direct_context_only       policy + social, ambient context only, no real policy (balanced)
-#   run_C3_direct_context_headwind   policy + social, ambient context only, no real policy (negative / headwind)
+#   run_C0_direct                       static baseline (no policy, no social)
+#   run_C1_direct                       social only
+#   run_C2_direct_news_only             policy only, just news (combined category)
+#   run_C2_direct_ambient_combined      policy only, news + ambient context together
+#   run_C2_direct_context_only          policy only, ambient context only, no real policy (balanced)
+#   run_C2_direct_context_headwind      policy only, ambient context only, no real policy (negative / headwind)
+#   run_C3_direct_news_only             policy + social, just news
+#   run_C3_direct_ambient_combined      policy + social, news + ambient context together
+#   run_C3_direct_context_only          policy + social, ambient context only, no real policy (balanced)
+#   run_C3_direct_context_headwind      policy + social, ambient context only, no real policy (negative / headwind)
+#
+# C2 and C3 get the same 4 content arms (news-only / ambient-combined /
+# context-only / headwind) so the news/context axis can be compared with and
+# without the social layer, not just tested under C3.
 #
 # The last two omit --news-corpus on purpose: news.build_news_schedule only
 # goes context-only when --context-corpus is set AND --news-corpus is absent
@@ -85,9 +92,24 @@ run run_C0_direct --condition C0
 
 run run_C1_direct --condition C1 --network "$NETWORK"
 
-run run_C2_direct --condition C2 --news-corpus "$NEWS_CORPUS" --policy-category combined
+# --- C2: policy only, all 4 content arms ---
 
-run run_C3_direct --condition C3 --network "$NETWORK" \
+run run_C2_direct_news_only --condition C2 \
+  --news-corpus "$NEWS_CORPUS" --policy-category combined
+
+run run_C2_direct_ambient_combined --condition C2 \
+  --news-corpus "$NEWS_CORPUS" --policy-category combined \
+  --context-corpus "$CONTEXT_CORPUS" --context-mix balanced
+
+run run_C2_direct_context_only --condition C2 \
+  --context-corpus "$CONTEXT_CORPUS" --context-mix balanced
+
+run run_C2_direct_context_headwind --condition C2 \
+  --context-corpus "$CONTEXT_CORPUS" --context-mix negative
+
+# --- C3: policy + social, all 4 content arms ---
+
+run run_C3_direct_news_only --condition C3 --network "$NETWORK" \
   --news-corpus "$NEWS_CORPUS" --policy-category combined
 
 run run_C3_direct_ambient_combined --condition C3 --network "$NETWORK" \
@@ -101,4 +123,4 @@ run run_C3_direct_context_headwind --condition C3 --network "$NETWORK" \
   --context-corpus "$CONTEXT_CORPUS" --context-mix negative
 
 echo
-echo "All 7 runs complete. Outputs in $RUNS_DIR/{run_C0_direct,run_C1_direct,run_C2_direct,run_C3_direct,run_C3_direct_ambient_combined,run_C3_direct_context_only,run_C3_direct_context_headwind}.json"
+echo "All 10 runs complete. Outputs in $RUNS_DIR/{run_C0_direct,run_C1_direct,run_C2_direct_news_only,run_C2_direct_ambient_combined,run_C2_direct_context_only,run_C2_direct_context_headwind,run_C3_direct_news_only,run_C3_direct_ambient_combined,run_C3_direct_context_only,run_C3_direct_context_headwind}.json"

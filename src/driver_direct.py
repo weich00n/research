@@ -96,6 +96,15 @@ def main():
             raise RuntimeError(
                 f"{len(missing)} agents missing from network {args.network} "
                 f"(run generate_social_network.py first)")
+        # --num-agents truncates the roster (cheap test runs), but the network
+        # file still lists each agent's FULL follow-list against all 100
+        # agents. Without this filter, engine_direct.agents_by_id[followed_id]
+        # raises KeyError the first time a loaded agent follows someone
+        # outside the truncated slice.
+        if args.num_agents:
+            loaded_ids = {a.agent_id for a in agents}
+            network = {aid: [f for f in follows if f in loaded_ids]
+                       for aid, follows in network.items() if aid in loaded_ids}
 
     news_schedule = None
     if policy_on:
