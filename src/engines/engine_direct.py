@@ -217,39 +217,51 @@ class DirectSimulation:
 
     # ── One timestep ───────────────────────────────────────────────────────
 
+    def _gather_news_lessons(self, agent, timestep, news_items):
+        """Step 1: policy news -> lessons. ALL of this week's news batched into
+        ONE call (VacSim's broadcast_news_and_policies), not one call per
+        article. Broadcast: every agent reads the same fixed weekly item(s)
+        (`self.news_schedule`). Overridden by RecsysDirectSimulation to
+        recommend a personalised subset instead."""
+        if not news_items:
+            return []
+        news_texts = [n.text for n in news_items]
+        sys_n, usr_n = build_news_lessons_prompt(agent, news_texts)
+        out = self._chat_json(sys_n, usr_n)
+        return _parse_lessons(out, agent.agent_id, timestep, "policy_news")
+
+    def _gather_social_lessons(self, agent, timestep, social_on):
+        """Step 2: followed-agent posts -> lessons. ALL of this week's posts
+        batched into ONE call (VacSim's feed_tweets), not one call per tweet.
+        Feed: every post from a followed agent at t-1, unranked. Overridden by
+        RecsysDirectSimulation to recommend a personalised, similarity-ranked
+        subset from the whole tweet pool instead."""
+        if not social_on:
+            return []
+        post_texts = []
+        for followed_id in self.network.get(agent.agent_id, []):
+            followed = self.agents_by_id[followed_id]
+            for tweet in followed.tweets:
+                if tweet.created_timestep == timestep - 1:
+                    post_texts.append(tweet.text)
+        if not post_texts:
+            return []
+        sys_s, usr_s = build_social_lessons_prompt(agent, post_texts)
+        out = self._chat_json(sys_s, usr_s)
+        return _parse_lessons(out, agent.agent_id, timestep, "social_post")
+
     def _run_agent_week(self, agent, timestep, news_items):
-        """Run one week for a single agent: batched news lesson-forming (1),
-        batched social lesson-forming (2), gate, VacSim-style retrieval
-        (4-6), a single intention-update call (7), and an optional post (8).
+        """Run one week for a single agent: news lesson-forming (1), social
+        lesson-forming (2), gate, VacSim-style retrieval (4-6), a single
+        intention-update call (7), and an optional post (8).
 
         COMPUTE then COMMIT, like engines.engine: every LLM call runs first;
         the agent's own state is mutated only at the end, so a failure leaves
         the agent untouched and cleanly retriable.
         """
         _, social_on = CONDITIONS[self.condition]
-        new_lessons = []
-
-        # 1. policy news -- ALL of this week's news batched into ONE call
-        #    (VacSim's broadcast_news_and_policies), not one call per article.
-        if news_items:
-            news_texts = [n.text for n in news_items]
-            sys_n, usr_n = build_news_lessons_prompt(agent, news_texts)
-            out = self._chat_json(sys_n, usr_n)
-            new_lessons += _parse_lessons(out, agent.agent_id, timestep, "policy_news")
-
-        # 2. social posts from followed agents, posted at t-1 -- ALL batched
-        #    into ONE call (VacSim's feed_tweets), not one call per tweet.
-        if social_on:
-            post_texts = []
-            for followed_id in self.network.get(agent.agent_id, []):
-                followed = self.agents_by_id[followed_id]
-                for tweet in followed.tweets:
-                    if tweet.created_timestep == timestep - 1:
-                        post_texts.append(tweet.text)
-            if post_texts:
-                sys_s, usr_s = build_social_lessons_prompt(agent, post_texts)
-                out = self._chat_json(sys_s, usr_s)
-                new_lessons += _parse_lessons(out, agent.agent_id, timestep, "social_post")
+        new_lessons = (self._gather_news_lessons(agent, timestep, news_items)
+                       + self._gather_social_lessons(agent, timestep, social_on))
 
         # Gate: no new inputs this week -> no update; carry the previous
         # intention forward. Week 1 of a social-on condition is never gated
