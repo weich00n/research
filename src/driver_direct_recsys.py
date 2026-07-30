@@ -140,6 +140,11 @@ def main():
 
     done_through = resume_state["current_timestep"] if resume_state else 0
     sim.current_timestep = done_through
+    if done_through:
+        # --resume: replay already-completed weeks' news into _news_pool, since
+        # a fresh process only calls step() (and hence _reveal_week_news) for
+        # weeks after the checkpoint. See catch_up_news_pool's docstring.
+        sim.catch_up_news_pool(done_through)
     remaining = args.timesteps - done_through
     if remaining <= 0:
         print(f"Run already complete through week {done_through} "

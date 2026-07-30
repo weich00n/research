@@ -165,7 +165,15 @@ def parse_log(path):
         "lat_median": float(np.median(lat)) if lat else None,
         "lat_p90": float(np.percentile(lat, 90)) if lat else None,
         "n_calls": len(lat),
-        "retried_calls": sum(1 for a in re.findall(r"attempt (\d+)", text) if int(a) > 1),
+        # Comma-anchored so this only matches the success-line format
+        # ("...ok in {t}s (attempt {n}, prompt..."), not the retry-warning
+        # lines ("(attempt {n}/{max_retries})") that also fire for the same
+        # call -- the looser `attempt (\d+)` pattern double-counted a single
+        # retried call once per warning line plus once for its eventual
+        # success, inflating this metric by roughly how many attempts it
+        # took rather than whether it needed a retry at all. Matches
+        # run_dashboard.py's RE_ATTEMPT.
+        "retried_calls": sum(1 for a in re.findall(r"\(attempt (\d+),", text) if int(a) > 1),
         "warn_parse": text.count("JSON parse failed"),
         "warn_empty": text.count("empty content"),
         "warn_failed": text.count("LLM call failed"),

@@ -296,10 +296,14 @@ class DirectSimulation:
                 tweet_text = tweet_out["text"]
 
         # ── COMMIT (no LLM calls below) ─────────────────────────────────────
+        # Pull the value out of int_out BEFORE mutating agent state, so a
+        # KeyError on a malformed LLM response raises before any lesson is
+        # attached — keeping a retried agent's re-perception idempotent.
+        intention = int_out["fertility_intention"]
+        reasoning = int_out.get("reasoning", "")
         for lesson in new_lessons:
             agent.add_lesson(lesson)
-        agent.update_intention(int_out["fertility_intention"], timestep,
-                               int_out.get("reasoning", ""))
+        agent.update_intention(intention, timestep, reasoning)
         if tweet_text:
             agent.post_tweet(tweet_text, timestep)
 

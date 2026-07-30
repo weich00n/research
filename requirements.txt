@@ -10,6 +10,10 @@ numpy
 # --- Analysis / validation scripts ---
 pandas
 scikit-learn
+scipy
+krippendorff
+networkx
+plotly
 
 # --- Data pipeline (only for rebuilding agents/personas/networks; optional) ---
 datasets

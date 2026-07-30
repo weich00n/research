@@ -108,7 +108,7 @@ def run_cell(run_name, condition, news_schedule, args, llm, scorer):
     sim = Simulation(agents=agents, network={}, condition=condition, llm=llm,
                      scorer=scorer, news_schedule=news_schedule,
                      output_dir=RUNS_DIR, run_name=run_name, verbose=False,
-                     concurrency=args.concurrency)
+                     concurrency=args.concurrency, gate_no_input=not args.no_gating)
     sim.initialise_baseline()  # no-op on pre-seeded agents
     for t in range(1, args.weeks + 1):
         sim.step(t)
@@ -236,6 +236,12 @@ def main():
                              "Use one label per model/corpus variant.")
     parser.add_argument("--report-only", action="store_true",
                         help="rebuild the report from existing cell runs, no LLM")
+    parser.add_argument("--no-gating", action="store_true",
+                        help="disable update gating (see driver.py --no-gating). "
+                             "Needed for the C0 control cell to actually measure "
+                             "no-input drift -- with gating on (the default), "
+                             "every week of a no-input cell is gated, so its raw "
+                             "drift is ~0 by construction, not measured.")
     args = parser.parse_args()
 
     global RUNS_DIR

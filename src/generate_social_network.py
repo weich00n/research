@@ -15,14 +15,13 @@ Usage (from src/):
 
 import argparse
 import os
-import re
 
 import numpy as np
 
 from sandbox.agent import load_agents
 from utils.generate_utils import LLMClient
 from utils.logging_utils import get_logger, setup_logger
-from utils.network_utils import save_network
+from utils.network_utils import load_network, save_network
 
 RANDOM_STATE = 42
 
@@ -36,15 +35,23 @@ DEFAULT_OUTPUT = os.path.join(HERE, "..", "outputs", "networks", "social_network
 def _parse_friend_indices(response, self_idx, num_agents):
     """Pull friend indices out of the LLM's free-text reply.
 
-    Grabs every run of digits (`\\d+`), then keeps those that are valid: not the
-    agent itself, in range [0, num_agents), and not already seen. Brittle by
-    design — it trusts the prompt's "IDs only" instruction; stray numbers in the
-    text (e.g. "agent 12") would be misread. Raises if nothing valid is found so
-    the caller can retry.
+    Requires the reply to actually BE the instructed "ID, ID, ID" format:
+    split on commas and require every non-empty token to be a bare integer.
+    This is deliberately strict, not lenient -- a reply like "I'll pick 3
+    people: 5, 12, 44" fails to parse (raising, so the caller retries)
+    instead of a looser digit-scan silently absorbing the stray "3" as a
+    real friend edge. This network is generated once and frozen for the
+    whole simulation, so a wrong edge here would be undetectable downstream.
     """
+    tokens = [t.strip() for t in response.strip().split(",")]
+    if not all(t.isdigit() for t in tokens if t):
+        raise ValueError(f"Response is not a clean comma-separated ID list: "
+                          f"{response[:100]!r}")
     indices = []
-    for token in re.findall(r"\d+", response):
-        i = int(token)
+    for t in tokens:
+        if not t:
+            continue
+        i = int(t)
         if i != self_idx and 0 <= i < num_agents and i not in indices:
             indices.append(i)
     if not indices:
@@ -53,7 +60,8 @@ def _parse_friend_indices(response, self_idx, num_agents):
 
 
 def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STATE,
-                         verbose=True, include_area=True, include_persona=False):
+                         verbose=True, include_area=True, include_persona=False,
+                         checkpoint_path=None):
     """Return {agent_id: [followed agent_ids]} chosen by the LLM per agent.
 
     If the LLM fails max_try times for an agent (VacSim leaves them edgeless),
@@ -64,8 +72,21 @@ def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STAT
     the prompt's field list) for the with/without-area homophily comparison.
     `include_persona=True` appends each agent's narrative persona (experimental;
     ~9.9k-token prompt — needs the vLLM server at MAX_MODEL_LEN >= 16384).
+
+    `checkpoint_path`, if given, makes this resumable: any agent already
+    present in the JSON at that path is skipped (its edges kept as-is), and
+    the network is re-saved after every agent so a crash partway through a
+    ~100-agent / up-to-1000-call LLM job doesn't lose all prior progress.
     """
-    rng = np.random.default_rng(seed)
+    # One independent RNG substream per agent (not one shared, sequentially-
+    # advancing rng) -- otherwise which agents land on the random-fallback
+    # path, and what they draw, depends on the live pattern of LLM failures,
+    # which differs run to run. That makes seed=42 reproducibility illusory
+    # whenever the failure set differs. Spawning per-agent substreams means
+    # agent i's fallback draw (if it ever needs one) is always the same,
+    # regardless of what happened to any other agent.
+    agent_rngs = [np.random.default_rng(s)
+                 for s in np.random.SeedSequence(seed).spawn(len(agents))]
     profile_kwargs = {"include_area": include_area, "include_persona": include_persona}
     profile_lines = [f"{i}. {a.get_profile_str(**profile_kwargs)}"
                      for i, a in enumerate(agents)]
@@ -74,9 +95,16 @@ def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STAT
         schema += "\tArea"
     if include_persona:
         schema += "\tAbout"
+
     network = {}
+    if checkpoint_path and os.path.exists(checkpoint_path):
+        network = load_network(checkpoint_path)
+        logger.info(f"Resuming from {checkpoint_path}: {len(network)} agents already done")
 
     for idx, agent in enumerate(agents):
+        if agent.agent_id in network:
+            continue
+        rng = agent_rngs[idx]
         others = [line for i, line in enumerate(profile_lines) if i != idx]
         system_prompt = (
             f"Pretend you are a person with the following profile: "
@@ -120,6 +148,8 @@ def generate_llm_network(agents, llm, max_try=10, fallback_k=5, seed=RANDOM_STAT
         network[agent.agent_id] = [agents[i].agent_id for i in friends]
         if verbose:
             logger.info(f"{agent.agent_id}: {len(friends)} friends")
+        if checkpoint_path:
+            save_network(network, checkpoint_path)
 
     return network
 
@@ -150,9 +180,10 @@ if __name__ == "__main__":
     llm = LLMClient()
     logger.info(f"LLM: {llm.provider} / {llm.model}")
 
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
     network = generate_llm_network(agents, llm, fallback_k=args.fallback_k,
                                    include_area=not args.no_area,
-                                   include_persona=args.persona)
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+                                   include_persona=args.persona,
+                                   checkpoint_path=args.output)
     save_network(network, args.output)
     logger.info(f"Network saved to {args.output}")

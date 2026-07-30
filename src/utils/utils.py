@@ -14,6 +14,37 @@ def compile_enumerate(items, header=None):
     return "\n".join(lines)
 
 
+def _iter_balanced_spans(text, open_ch, close_ch):
+    """Yield genuinely balanced open_ch...close_ch spans of `text`, in the
+    order their opener appears. Quote-aware (a brace inside a "..." string
+    doesn't affect depth) so it doesn't get thrown off by JSON string
+    contents that happen to contain the closing character.
+    """
+    depth = 0
+    start = None
+    in_string = False
+    escape = False
+    for i, ch in enumerate(text):
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == open_ch:
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == close_ch and depth > 0:
+            depth -= 1
+            if depth == 0 and start is not None:
+                yield text[start : i + 1]
+
+
 def parse_json_response(text):
     """Parse a JSON object/array out of an LLM response.
 
@@ -31,15 +62,14 @@ def parse_json_response(text):
         return json.loads(text)
     except json.JSONDecodeError:
         pass
-    # 3. Last resort: grab the widest {...} or [...] span and parse that. We use
-    #    find() for the first opener and rfind() for the last closer, so leading
-    #    /trailing chatter ("Sure, here's the JSON:") is sliced off.
+    # 3. Last resort: try every genuinely balanced {...} / [...] span (in
+    #    order) until one parses. Deliberately NOT first-opener-to-last-closer
+    #    (find()/rfind()) -- that can splice together an unrelated brace pair
+    #    from surrounding prose chatter and silently "succeed" on the wrong span.
     for open_ch, close_ch in (("{", "}"), ("[", "]")):
-        start = text.find(open_ch)
-        end = text.rfind(close_ch)
-        if start != -1 and end > start:
+        for span in _iter_balanced_spans(text, open_ch, close_ch):
             try:
-                return json.loads(text[start : end + 1])
+                return json.loads(span)
             except json.JSONDecodeError:
                 continue
     raise ValueError(f"Could not parse JSON from LLM response: {text[:200]!r}")

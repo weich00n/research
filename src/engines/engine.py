@@ -268,7 +268,13 @@ class Simulation:
         lessons = []
         for mem in memories:
             indices = mem.get("source_indices") or []
-            source_agent_id = items[indices[0] - 1][0] if len(indices) == 1 else None
+            # Only trust a single, in-range 1-indexed index; anything else
+            # (0, out-of-range, or a genuine multi-item merge) is unknown
+            # provenance, not an item to guess at (0 would otherwise wrap to
+            # items[-1] via Python's negative indexing).
+            source_agent_id = (items[indices[0] - 1][0]
+                                if len(indices) == 1 and 1 <= indices[0] <= len(items)
+                                else None)
             rel, cos = self.scorer.creation_scores(mem["memory_text"])
             lessons.append(Lesson(
                 agent_id=agent.agent_id,
@@ -388,17 +394,18 @@ class Simulation:
                 tweet_text = tweet_out["text"]
 
         # ── COMMIT (no LLM calls below — cannot fail, so state stays consistent) ─
+        # Pull every value out of tpb_out/int_out BEFORE mutating agent state,
+        # so a KeyError on a malformed LLM response raises before any lesson
+        # is attached — keeping a retried agent's re-perception idempotent.
+        attitude = tpb_out["attitude_score"]
+        norm = tpb_out["subjective_norm_score"]
+        pbc = tpb_out["pbc_score"]
+        intention = int_out["fertility_intention"]
         for lesson in new_lessons:
             agent.add_lesson(lesson)
         for lesson in retrieved:
             lesson.used_in_update = True
-        agent.update_belief_state(
-            tpb_out["attitude_score"],
-            tpb_out["subjective_norm_score"],
-            tpb_out["pbc_score"],
-            int_out["fertility_intention"],
-            timestep,
-        )
+        agent.update_belief_state(attitude, norm, pbc, intention, timestep)
         if reflection_lesson:
             agent.add_lesson(reflection_lesson)
         if tweet_text:

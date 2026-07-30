@@ -2,19 +2,20 @@
 # Serve Qwen2.5-14B for the fertility ABM on a multi-GPU box (e.g. 4x L40S).
 #
 # Default: launch one independent vLLM replica per GPU (data-parallel), each on
-# its own port 8001..800N. Each L40S (46GB) holds a full bf16 copy (~28GB), so no
-# tensor-parallel / NVLink is needed. The driver round-robins across the ports via
-# LOCAL_LLM_URLS, and vLLM's continuous batching turns the concurrent agent
-# requests into GPU throughput.
+# its own port 8101..810N (BASE_PORT=8100 + replica index). Each L40S (46GB)
+# holds a full bf16 copy (~28GB), so no tensor-parallel / NVLink is needed. The
+# driver round-robins across the ports via LOCAL_LLM_URLS, and vLLM's continuous
+# batching turns the concurrent agent requests into GPU throughput.
 #
 # Usage:
-#   bash serve_qwen.sh            # 4 GPUs (0,1,2,3) -> ports 8001..8004
+#   bash serve_qwen.sh            # 4 GPUs (0,1,2,3) -> ports 8101..8104
 #   GPUS="0 1 3" bash serve_qwen.sh   # skip a contended GPU (e.g. GPU 2 in use)
+#   BASE_PORT=8000 bash serve_qwen.sh # override the base port
 #
 # Then set in .env (one URL per launched port):
 #   LLM_PROVIDER=local
 #   LOCAL_LLM_MODEL=Qwen/Qwen2.5-14B-Instruct
-#   LOCAL_LLM_URLS=http://localhost:8001/v1,http://localhost:8002/v1,http://localhost:8003/v1,http://localhost:8004/v1
+#   LOCAL_LLM_URLS=http://localhost:8101/v1,http://localhost:8102/v1,http://localhost:8103/v1,http://localhost:8104/v1
 #
 # Run inside tmux/screen so the servers survive your SSH session. Ctrl-C stops all.
 #

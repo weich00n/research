@@ -71,6 +71,22 @@ class RecsysDirectSimulation(DirectSimulation):
             })
         return self._news_pool
 
+    def catch_up_news_pool(self, through_timestep):
+        """Replay already-completed weeks' scheduled news into `_news_pool`.
+
+        `_news_pool` is pure in-memory state, only ever grown by
+        `_reveal_week_news` inside `step()`. On --resume, a fresh process
+        only calls `step()` for weeks after the checkpoint, so without this
+        the pool silently starts empty instead of containing every article
+        already revealed pre-resume -- shrinking the recommender's candidate
+        set and making a resumed run's recommendations diverge from a
+        continuous run's. `news_schedule` is deterministic and known
+        upfront, so this is safe to call once, right after setting
+        `current_timestep` on resume (see driver_direct_recsys.py).
+        """
+        for t in range(1, through_timestep + 1):
+            self._reveal_week_news(t)
+
     def step(self, timestep):
         """Compute this week's per-agent recommendations ONCE (bulk, before
         any per-agent LLM calls), then run the normal weekly loop -- the

@@ -97,9 +97,15 @@ class LLMClient:
                 resp = requests.post(url or self.url, json=payload, headers=headers,
                                      timeout=self.timeout)
                 if resp.status_code == 429:
-                    # rate limited: honour Retry-After if given, else back off hard
-                    wait = float(resp.headers.get("Retry-After")
-                                 or self.retry_wait * 4 * (attempt + 1))
+                    # rate limited: honour Retry-After if given, else back off hard.
+                    # RFC 7231 also allows Retry-After to be an HTTP-date string,
+                    # which float() can't parse -- fall back to the hard backoff
+                    # rather than letting a ValueError crash the whole run.
+                    try:
+                        wait = float(resp.headers.get("Retry-After")
+                                     or self.retry_wait * 4 * (attempt + 1))
+                    except (ValueError, TypeError):
+                        wait = self.retry_wait * 4 * (attempt + 1)
                     last_error = f"429 Too Many Requests (waited {wait:.0f}s)"
                     logger.warning(f"429 rate limited (attempt {attempt + 1}/"
                                    f"{self.max_retries}), waiting {wait:.0f}s")
