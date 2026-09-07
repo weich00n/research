@@ -59,7 +59,7 @@ class Simulation:
     def __init__(self, agents, network, condition, llm, scorer,
                  news_schedule=None, output_dir=os.path.join("outputs", "runs"),
                  run_name=None, verbose=True, concurrency=32, rerank_top_k=12,
-                 gate_no_input=True):
+                 gate_no_input=True, retrieval_fn=retrieve_memories):
         if condition not in CONDITIONS:
             raise ValueError(f"condition must be one of {list(CONDITIONS)}")
         self.agents = agents
@@ -79,6 +79,14 @@ class Simulation:
         # outputs/analysis/news_corpus_results.md §3b). Disable with
         # gate_no_input=False (driver --no-gating) to reproduce old behaviour.
         self.gate_no_input = gate_no_input
+        # Which memory-retrieval formula feeds calls 7a/7b. Defaults to the
+        # CLAUDE.md saliency x TPB-relevance formula (retrieve_memories); the
+        # retrieval-mechanism ablation swaps in a construct-blind alternative
+        # (e.g. retrieve_memories_saliency_only) to test whether the TPB<->
+        # intention correlation depends on retrieval pre-filtering by
+        # construct-relevance. Same (lessons, timestep) -> (selected,
+        # construct_map) signature either way.
+        self.retrieval_fn = retrieval_fn
         self.output_dir = output_dir
         self.run_name = run_name or f"run_{condition}"
         self.verbose = verbose
@@ -150,8 +158,10 @@ class Simulation:
         so the baseline is reproducible. Writes scores only — no reflection memory
         and no tweet, so the t=0 memory stream stays the pure seed memories.
         """
-        # Only seed memories exist at t=0, so retrieval returns the <=5 seeds.
-        retrieved, _ = retrieve_memories(agent.lessons, 0)
+        # Only seed memories exist at t=0, so retrieval returns the <=5 seeds
+        # (identical under either retrieval_fn, since the seed-only path in
+        # both formulas is plain saliency ranking).
+        retrieved, _ = self.retrieval_fn(agent.lessons, 0)
         sys_t, usr_t = build_baseline_tpb_prompt(agent, retrieved)
         tpb_out = self._chat_json(sys_t, usr_t, temperature=0.0)
         sys_i, usr_i = build_baseline_intention_prompt(agent, retrieved)
@@ -358,7 +368,7 @@ class Simulation:
         # retrieval may re-append to retrieval_history — analytics-only, harmless.)
         all_lessons = agent.lessons + new_lessons
         self.scorer.rerank(all_lessons, top_k=self.rerank_top_k)
-        retrieved, construct_map = retrieve_memories(all_lessons, timestep)
+        retrieved, construct_map = self.retrieval_fn(all_lessons, timestep)
 
         # 7a. TPB update (attitude/norm/pbc + reflection) — intention NOT here.
         sys_t, usr_t = build_tpb_update_prompt(agent, retrieved, new_messages, timestep)

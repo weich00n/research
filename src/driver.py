@@ -23,6 +23,7 @@ import os
 from engines.engine import CONDITIONS, Simulation
 from LLM_judge import RelevanceScorer
 from sandbox.agent import Agent, load_agents
+from sandbox.lesson import retrieve_memories, retrieve_memories_saliency_only
 from sandbox.lesson import reseed_id_counter as reseed_lesson_ids
 from sandbox.news import build_news_schedule
 from sandbox.tweet import reseed_id_counter as reseed_tweet_ids
@@ -67,6 +68,16 @@ def main():
     parser.add_argument("--rerank-top-k", type=int, default=12,
                         help="hybrid mode: cosine shortlist size per construct that "
                              "gets LLM-reranked (union across constructs)")
+    parser.add_argument("--retrieval", choices=["tpb", "saliency"], default="tpb",
+                        help="which formula selects the <=20 memories fed to the "
+                             "TPB-update and intention-update calls: 'tpb' is the "
+                             "CLAUDE.md formula (saliency x per-construct TPB-"
+                             "relevance); 'saliency' is a construct-blind ablation "
+                             "(pure saliency ranking, no relevance term) used to "
+                             "test whether the TPB<->intention correlation depends "
+                             "on retrieval pre-filtering by construct-relevance. "
+                             "Auto-suffixes the run name with '_saliencyretr' unless "
+                             "--run-name is set explicitly.")
     parser.add_argument("--num-agents", type=int, default=None,
                         help="limit to first N agents (for cheap test runs)")
     parser.add_argument("--no-gating", action="store_true",
@@ -91,9 +102,16 @@ def main():
     args = parser.parse_args()
 
     # Resolve the run name / checkpoint path the same way Simulation does, so
-    # --resume can find the file a previous run wrote.
-    run_name = args.run_name or f"run_{args.condition}"
+    # --resume can find the file a previous run wrote. The saliency ablation
+    # gets an explicit name suffix so it can never collide with (or be
+    # mistaken for) a canonical C0-C3 run using the CLAUDE.md formula.
+    default_run_name = f"run_{args.condition}"
+    if args.retrieval == "saliency":
+        default_run_name += "_saliencyretr"
+    run_name = args.run_name or default_run_name
     run_path = os.path.join(args.output_dir, f"{run_name}.json")
+    retrieval_fn = (retrieve_memories_saliency_only if args.retrieval == "saliency"
+                     else retrieve_memories)
 
     # Resume rebuilds agents (with their seed memories, beliefs, history, tweets)
     # from the last checkpoint; a fresh run loads pristine profiles. On resume the
@@ -185,6 +203,7 @@ def main():
         concurrency=args.concurrency,
         rerank_top_k=args.rerank_top_k,
         gate_no_input=not args.no_gating,
+        retrieval_fn=retrieval_fn,
     )
 
     # Continue from the last completed week (0 for a fresh run). Seed init and

@@ -187,3 +187,45 @@ def retrieve_memories(lessons, current_timestep, max_seed=5, per_construct=5, ca
                     l.record_retrieval(current_timestep, construct)
 
     return selected, construct_map
+
+
+def retrieve_memories_saliency_only(lessons, current_timestep, max_seed=5, cap=20):
+    """Construct-blind sibling of `retrieve_memories`: ranks purely by
+    saliency (importance x decay), with no TPB_relevance term at all — so
+    memory *selection* cannot be pre-filtered toward attitude/norm/pbc
+    content the way the CLAUDE.md formula's per-construct pass is.
+
+    Used only by the retrieval-mechanism ablation (does the TPB<->intention
+    correlation survive when the same downstream update calls see a
+    construct-agnostic memory set?). Does NOT replace `retrieve_memories`,
+    which remains the CLAUDE.md-specified formula for C0-C3 runs.
+
+    Same seed/cap shape as `retrieve_memories` (<=`max_seed` seed memories,
+    <=`cap` total) so it's a drop-in for `Simulation.retrieval_fn`, but takes
+    a single ranked pass over ALL memories (no per-construct top-5, since
+    there's no construct to rank by) — top `cap - len(seed)` simulation
+    memories by raw saliency fill the rest.
+
+    Returns (retrieved_lessons, construct_map) where construct_map tags every
+    entry "saliency" (no construct info exists in this mode).
+    """
+    seed = [l for l in lessons if l.memory_class == "seed"]
+    sim = [l for l in lessons if l.memory_class == "simulation"]
+
+    seed.sort(key=lambda l: l.saliency(current_timestep), reverse=True)
+    selected = seed[:max_seed]
+    construct_map = {l.memory_id: ["saliency"] for l in selected}
+    for l in selected:
+        l.record_retrieval(current_timestep, "saliency")
+
+    sim.sort(key=lambda l: l.saliency(current_timestep), reverse=True)
+    for l in sim:
+        if len(construct_map) >= cap:
+            break
+        if l.memory_id in construct_map:
+            continue
+        selected.append(l)
+        construct_map[l.memory_id] = ["saliency"]
+        l.record_retrieval(current_timestep, "saliency")
+
+    return selected, construct_map
