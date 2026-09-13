@@ -93,3 +93,7 @@ run run_C3_saliencyretr --condition C3 --network "$NETWORK" \
 
 echo
 echo "All 4 runs complete. Outputs in $RUNS_DIR/{run_C0_saliencyretr,run_C1_saliencyretr,run_C2_saliencyretr,run_C3_saliencyretr}.json"
+
+echo
+echo "===== Analyzing: does TPB<->intention mediation survive construct-blind retrieval? ====="
+python validation/analyze_retrieval_ablation.py
