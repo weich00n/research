@@ -38,11 +38,31 @@ CONSTRUCT_LABELS = {"attitude_score": "attitude", "subjective_norm_score": "norm
 
 # (arm, saliency-ablation run name, canonical (relevance-formula) run name,
 #  canonical run dir override or None -> defaults to RUNS)
+#
+# MATCHING RULE: retrieval mechanism must be the ONLY difference between the
+# pair. run_saliency_ablation.sh passes --news-corpus but NOT --context-corpus,
+# and runs on post-2026-07-21 code (batched tweet perception), so each canonical
+# comparator must likewise be policy-news-only (no ambient context) and batched.
+#
+# Fixed 2026-09-13. The previous mapping paired C2/C3 against run_C2_ambient /
+# run_C3_ambient, which carry a balanced ambient-context channel the ablation
+# runs never received (visible in the logs: ambient runs show two items at
+# "t=1 news", the ablation runs one). Ambient context supplies mixed-valence
+# shocks that move constructs and intention together, inflating their
+# correlation — so the mediation "collapse" that mapping showed for C2/C3
+# confounded retrieval blinding with the loss of the ambient channel.
+# C1 additionally paired against a pre-batching run (run_C1_Qwen_fixed,
+# 20 Jul) while the ablation is batched; batching cuts social_post memories
+# by ~66%, so that pair was confounded too.
 ARMS = [
-    ("C0_static",       "run_C0_saliencyretr", "c0_smoke_gated",    SMOKE),
-    ("C1_social_only",  "run_C1_saliencyretr", "run_C1_Qwen_fixed", None),
-    ("C2_combined",     "run_C2_saliencyretr", "run_C2_ambient",    None),
-    ("C3_combined",     "run_C3_saliencyretr", "run_C3_ambient",    None),
+    # C0 is frozen (no updates at all), so batching/ambient cannot apply.
+    ("C0_static",       "run_C0_saliencyretr", "c0_smoke_gated",      SMOKE),
+    # C1 has no news channel by construction; batched comparator.
+    ("C1_social_only",  "run_C1_saliencyretr", "run_C1_Qwen_batched", None),
+    # C2 policy-only corpus news, no ambient. No social, so batching is moot.
+    ("C2_combined",     "run_C2_saliencyretr", "c2_smoke_corpus",     SMOKE),
+    # C3 policy-only corpus news, no ambient, batched.
+    ("C3_combined",     "run_C3_saliencyretr", "run_C3_Qwen_batched", None),
 ]
 
 
