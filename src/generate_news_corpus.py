@@ -24,7 +24,7 @@ import datetime
 import json
 import os
 
-from sandbox.policy import get_policies
+from sandbox.policy import HOUSING, get_policies
 from utils.generate_utils import LLMClient
 from utils.logging_utils import get_logger, setup_logger
 
@@ -175,6 +175,56 @@ FACT_BLOCKS = {
         "around S$700 per month, lower than the cost of most childminding "
         "services today."
     ),
+    # ── NDR 2026 (opt-in; generated only with --include-ndr2026) ───────────
+    # Source: National Population and Talent Division summary of the marriage
+    # & parenthood measures announced at the National Day Rally, 17 Aug 2026.
+    "SG Child Support Package": (
+        "Announced at the National Day Rally on 17 Aug 2026. A new SG Child "
+        "Support Package replaces the Baby Bonus Scheme and the Large "
+        "Families Scheme, providing up to S$62,000 per Singapore Citizen "
+        "child over their growing years — about S$70,000 including existing "
+        "benefits. Components: a S$10,000 Baby Gift paid in two tranches "
+        "within 12 months of birth; S$32,000 in Child Credits paid at "
+        "S$2,000 a year from age 1 to 16; a S$5,000 CDA First Step Grant at "
+        "birth; Government CDA co-matching of up to S$5,000 under a uniform "
+        "cap extended to age 16; and a S$10,000 top-up to the Post-Secondary "
+        "Education Account in the year the child turns 17. Every Singapore "
+        "Citizen child receives the same level of support regardless of birth "
+        "order. It applies to children born on or after 1 Apr 2027; children "
+        "born between 2009 and 2027 receive transitional support."
+    ),
+    "Enhanced Childcare Leave": (
+        "Announced at the National Day Rally on 17 Aug 2026. Childcare Leave "
+        "and Extended Childcare Leave are merged into a single scheme. "
+        "Parents receive 8, 10, or 12 days of childcare leave per calendar "
+        "year depending on whether they have one, two, or three or more "
+        "Singapore Citizen children aged 12 and below, up from 6 days today, "
+        "and the leave now applies to children aged 12 and below rather than "
+        "being tiered by child age. The Government fully reimburses employers "
+        "for all child-related leave schemes up to a reimbursement cap. The "
+        "new scheme takes effect on 1 Apr 2027."
+    ),
+    "Preschool & Infant Care Fee Reduction": (
+        "Announced at the National Day Rally on 17 Aug 2026. Fees at "
+        "Government-supported preschools will be reduced to about S$150 per "
+        "month for full-day childcare and about S$300 per month for full-day "
+        "infant care, before means-tested subsidies — less than half of "
+        "today's fees. The reductions are phased in from 2028 and fully "
+        "implemented by 2030. Full subsidies will be extended to families "
+        "with Singapore Citizen children regardless of the applicant's "
+        "working status, with details to be announced in early 2027. The "
+        "network of Government-supported preschool operators will be "
+        "expanded, with additional support for eligible non-Government "
+        "operators."
+    ),
+    "Additional BTO Ballot Chance for Families": (
+        "Announced at the National Day Rally on 17 Aug 2026. From the "
+        "February 2027 sales exercise onward, first-timer families with or "
+        "expecting children will receive one additional ballot chance for "
+        "each Singapore Citizen child aged 18 and below when applying for a "
+        "Build-To-Order (BTO) or Sale of Balance Flats (SBF) unit. Further "
+        "housing support for large families is under study."
+    ),
 }
 
 # Lint: a generated article must mention its policy (any one of these
@@ -188,6 +238,13 @@ KEY_TERMS = {
     "Flexible Work Arrangement Request Guidelines": ["flexible work", "flexi"],
     "Preschool & Infant Care Subsidies": ["infant care", "childcare", "preschool"],
     "Infant Childminding Pilot": ["childmind"],
+    # ── NDR 2026 ──────────────────────────────────────────────────────────
+    "SG Child Support Package": ["child support package", "baby gift",
+                                 "child credits"],
+    "Enhanced Childcare Leave": ["childcare leave"],
+    "Preschool & Infant Care Fee Reduction": ["preschool", "infant care",
+                                              "childcare"],
+    "Additional BTO Ballot Chance for Families": ["ballot", "bto"],
 }
 
 # Theory-blind check: inputs must never carry TPB vocabulary.
@@ -196,7 +253,7 @@ TPB_TERMS = ["subjective norm", "behavioural control", "behavioral control",
 
 # Style-only few-shot exemplars about topics OUTSIDE the corpus (housing,
 # transport), so style cannot leak policy content between articles.
-STYLE_EXAMPLES = """Example article 1:
+_STYLE_EXAMPLE_HOUSING = """Example article 1:
 More new flats, shorter waits as HDB ramps up supply
 
 The Housing and Development Board will launch more than 50,000 new flats \
@@ -207,9 +264,9 @@ launched every year. Eligible first-timer families can receive up to S$120,000 \
 in grants on top of market discounts when buying a new flat. Couples awaiting \
 the completion of their new flats, with household incomes of S$7,000 or below, \
 can rent an interim flat from HDB at subsidised rates under the Parenthood \
-Provisional Housing Scheme, whose supply has more than doubled since 2021.
+Provisional Housing Scheme, whose supply has more than doubled since 2021."""
 
-Example article 2:
+_STYLE_EXAMPLE_TRANSPORT = """Example article 2:
 Getting around with young children made easier on public transport
 
 All public buses have been fitted with stroller restraint devices, and baby \
@@ -219,6 +276,27 @@ Ride-hail operators must let commuters travelling with children below 1.35m \
 indicate the need for a child seat at the point of booking. Children below \
 seven years of age travel free on public transport with a child concession \
 card, which parents can apply for at any SimplyGo office."""
+
+# Joined form reproduces the original exemplar block byte-for-byte, so prompts
+# for the eight pre-NDR-2026 policies are unchanged and the existing corpus
+# stays reproducible.
+STYLE_EXAMPLES = _STYLE_EXAMPLE_HOUSING + "\n\n" + _STYLE_EXAMPLE_TRANSPORT
+
+
+def style_examples_for(policy):
+    """Exemplars must sit OUTSIDE the corpus so style cannot leak policy content.
+
+    The housing exemplar (HDB supply, first-timer grants, Parenthood
+    Provisional Housing Scheme) is no longer outside the corpus now that NDR
+    2026 adds a housing instrument — generating BTO-ballot articles against it
+    risks importing flat counts and grant figures that are not in that policy's
+    fact block. Housing policies therefore get the transport exemplar only.
+    """
+    if policy.category == HOUSING:
+        return _STYLE_EXAMPLE_TRANSPORT.replace("Example article 2:",
+                                                "Example article 1:")
+    return STYLE_EXAMPLES
+
 
 SYSTEM_PROMPT = (
     "You are a journalist at a mainstream Singapore news outlet writing "
@@ -241,6 +319,8 @@ def _is_short_fact_block(policy_name):
 
 def build_user_prompt(policy, article_type):
     length = "80-150" if _is_short_fact_block(policy.name) else "120-200"
+    examples = style_examples_for(policy)
+    count = "two examples" if examples is STYLE_EXAMPLES else "an example"
     return (
         f"Scheme: {policy.name}\n"
         f"Summary: {policy.description}\n"
@@ -248,8 +328,8 @@ def build_user_prompt(policy, article_type):
         f"Task: {TYPE_INSTRUCTIONS[article_type]}\n"
         f"Length: {length} words. Headline on the first line, then the body. "
         f"No other text.\n\n"
-        f"Here are two examples of the expected style (different schemes - "
-        f"do not reuse their content):\n{STYLE_EXAMPLES}"
+        f"Here are {count} of the expected style (different schemes - "
+        f"do not reuse their content):\n{examples}"
     )
 
 
@@ -311,13 +391,27 @@ def generate_corpus(llm, policies, max_try=MAX_TRY):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
-    parser.add_argument("--category", choices=["financial", "caregiving"], default=None,
-                        help="limit to one policy category (default: all 8 policies)")
+    parser.add_argument("--category", choices=["financial", "caregiving", "housing"],
+                        default=None,
+                        help="limit to one policy category (default: all 8 policies; "
+                             "'housing' exists only in the NDR 2026 set)")
+    parser.add_argument("--include-ndr2026", action="store_true",
+                        help="also generate articles for the four NDR 2026 "
+                             "instruments (SG Child Support Package, Enhanced "
+                             "Childcare Leave, Preschool & Infant Care Fee "
+                             "Reduction, Additional BTO Ballot Chance). Write "
+                             "these to a SEPARATE --output file: the validated "
+                             "core corpus must stay reproducible, and mixing "
+                             "eras in one run double-counts superseded support.")
+    parser.add_argument("--era", choices=["pre_ndr2026", "ndr2026"], default=None,
+                        help="generate only one policy generation, e.g. "
+                             "--era ndr2026 for the NDR 2026 instruments alone")
     args = parser.parse_args()
 
     setup_logger(log_path=os.path.splitext(args.output)[0] + ".log")
 
-    policies = get_policies(args.category)
+    policies = get_policies(args.category, include_ndr2026=args.include_ndr2026,
+                            era=args.era)
     missing = [p.name for p in policies if p.name not in FACT_BLOCKS]
     if missing:
         raise ValueError(f"No fact block for: {missing}")
