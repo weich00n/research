@@ -6,13 +6,25 @@ This file brings any AI agent (or new developer) up to speed on the project's pu
 
 ## Research Question
 
-> When LLM agents are equipped with an explicit Theory of Planned Behaviour belief layer (attitude, subjective norm, perceived behavioural control) and exposed to realistic, theory-blind policy and peer inputs, do their fertility-intention changes flow through the theoretically-predicted constructs?
+> How do policy type, repeated exposure, ambient information, and social interaction jointly shape fertility intentions in an LLM-agent population?
 
-Concretely: does a policy *hypothesised* to raise a given TPB construct actually raise **that** construct (and not the others), and does that construct change **account for** the change in fertility intention, as TPB predicts? This is a **mediation test** of TPB, run across the C0–C3 conditions using the `expected_pathways` hypotheses recorded in `src/sandbox/policy.py`.
+*(Supervisor-approved 2026-09-25. Supersedes the earlier TPB-mediation framing, retained below as a secondary robustness dimension.)*
+
+The outcome variable is **fertility intention alone**. The primary contrast is **policy type**: does a sustained stream of financial policy news move intention differently from a sustained stream of caregiving policy news? Four factors:
+
+| Factor | Levels |
+|---|---|
+| Policy type | financial / caregiving |
+| Repeated exposure | single article / 12 weeks sustained |
+| Ambient information | policy-only / mixed-valence context |
+| Social interaction | off (C2) / on (C3) |
+| *Agent architecture (robustness)* | *explicit belief layer / none* |
 
 This is an **agent-based model (ABM)**, not a predictive demographic model. The goal is to study *mechanisms*, not to forecast Singapore's actual TFR.
 
-**Scope of claim (important).** This evaluates TPB's **fidelity as an agent architecture for LLM-based simulation** — i.e. whether LLM agents route intervention effects through the predicted constructs — **not** whether TPB is empirically true of real humans. The LLM has been trained on TPB and the construct labels appear in the prompts, so the simulation cannot adjudicate the theory's validity for human fertility. The scientifically interesting outcomes include **failures** of fidelity: a policy hypothesised to move PBC that instead moves `subjective_norm` (a *specificity* failure), or intention that shifts with no construct moving (the LLM *shortcutting* the scaffold).
+**Why TPB is no longer the lead framing.** The mediation test was run and the data did not support it. Under policy input the constructs do not mediate intention: PBC moves ~1.7 points on the 1–5 scale while its correlation with intention change is ~0 (r = −0.013, n = 1,200 agent-weeks), and this survives a construct-blind retrieval ablation. The belief layer also produces a saturation artifact (95–100% of agents monotone non-decreasing under uniformly positive news) that the no-TPB engine does not. The one place mediation is real is the social-only condition, where it survives ablation. TPB is therefore retained as an **architecture-robustness dimension** — does the policy ranking hold with and without a belief layer — not as the object of study.
+
+**Scope of claim (important).** Where TPB results are reported, they evaluate TPB's **fidelity as an agent architecture for LLM-based simulation**, **not** whether TPB is empirically true of real humans. The LLM has been trained on TPB and the construct labels appear in the prompts, so the simulation cannot adjudicate the theory's validity for human fertility.
 
 ---
 ## Theoretical Backbone: Theory of Planned Behaviour (TPB)
@@ -172,6 +184,25 @@ All policies are grounded in real Singapore instruments:
 - Parental leave / flexible work → `pbc_score` + `attitude_score`
 - Combined policy → `pbc_score`, `attitude_score`, possibly `subjective_norm_score`
 
+**NDR 2026 (opt-in, reported separately).** The National Day Rally of 17 Aug
+2026 announced four further instruments, held in `policy.NDR2026_POLICIES`:
+SG Child Support Package (financial; replaces Baby Bonus + Large Family
+Scheme), Enhanced Childcare Leave (caregiving), Preschool & Infant Care Fee
+Reduction (caregiving), and Additional BTO Ballot Chance for Families
+(**housing** — a new category with no pre-2026 member).
+
+The eight policies above remain the **validated core** and the default return
+of `get_policies()`, in their original order. This is deliberate on three
+counts: `build_news_schedule` round-robins in list order, so appending would
+change policy→week mapping for every existing C2/C3 run; M&P 2021 can only
+validate the pre-2026 landscape; and SG Child Support Package *supersedes* two
+core instruments (`policy.SUPERSEDED_BY`), so mixing eras double-counts the
+same support. Opt in with `get_policies(include_ndr2026=True)` or
+`era="ndr2026"`, and write NDR corpus articles to a **separate** file
+(`generate_news_corpus.py --era ndr2026 --output ...`) — a policy with no
+corpus article silently falls back to legacy description text, which is not a
+comparable stimulus. See `docs/sandbox_policy.md`.
+
 ---
 
 ## Dataset Pipeline Summary
@@ -293,17 +324,25 @@ each differs.
 
 Before interpreting simulation results, verify:
 
-1. **Annotation validity**: Compare LLM-generated TPB labels against human-coded benchmark using weighted kappa or Krippendorff's alpha.
-2. **Mechanism validity (primary analysis)**: a **mediation test** across C0–C3 using the per-policy `expected_pathways` in `src/sandbox/policy.py` (analysis-only metadata, never shown to agents):
-   - **Specificity** — does a policy raise its hypothesised construct *more* than the other constructs? (e.g. financial → `pbc`, peer pressure → `subjective_norm`).
-   - **Mediation** — decompose `policy → intention` into the indirect path (via the hypothesised construct) vs the direct path; TPB-as-scaffold "passes" when the indirect path dominates.
-   - **Sign / rank** — are the construct→intention slopes all positive and roughly in the order reported for human fertility (attitude/PBC strong, subjective norm weaker), cf. Ajzen & Klobas (2013)?
+1. **External validity (primary analysis)**: does the simulated per-category ranking reproduce real-world evidence? See `outputs/analysis/real_world_validation_table.md` for the policy → closest-finding → direction-of-agreement map. Three tiers, in descending strength:
+   - **Experimental** — Wang & Dong (2024), *Eur. J. Population* 40(1):33: survey experiment, N = 1,092 Singaporeans aged 25–39, OR 1.55–1.79 for flexible work, work-family-conflict mechanism. The closest thing to a real benchmark in the policy set.
+   - **Behavioural** — Yeung et al. (2023), *J. Marriage and Family*, N = 1,835: paternity-leave takers were *no* more likely to have another child. A null that conflicts with the perceived-conducive ranking, so within-category evidence is heterogeneous.
+   - **Stated preference** — M&P Survey 2021: financial cost is the most-cited barrier; 81–90% said flexible work eased family formation, 77% said the same of paternity leave.
+
+   **Vintage caveat, must be stated in any write-up:** all eight instruments took effect Dec 2024 – Apr 2026, *after* the 2021 survey. The validation therefore operates at the level of **instrument type**, not specific scheme — the survey asked about flexible work and paternity leave directly, and the modelled instruments are enhancements to those same types. Compare category-level rankings, not scheme-level effect sizes.
+
+   Three of eight policies (Large Family Scheme, Child LifeSG Credits, Infant Childminding Pilot) have **no** real-world evaluation. Flag as untested rather than forcing a match.
+2. **Mechanism validity (secondary)**: where TPB runs are reported, use the per-policy `expected_pathways` in `src/sandbox/policy.py` (analysis-only metadata, never shown to agents):
+   - **Specificity** — does a policy raise its hypothesised construct *more* than the others? Verified: 43/45 articles move `pbc` hardest, and this survives construct-blind retrieval, so it is content-driven rather than a retrieval artifact.
+   - **Mediation** — **tested and not supported under policy input** (see Research Question). Real and ablation-robust under social-only.
+   - **Sign / rank** — construct→intention slopes should be positive. The human benchmark is contested: Ajzen & Klobas (2013) report per-country coefficients with no stable ordering (norm outranks attitude in Germany), while a 2025 meta-analysis (Liang et al., *Advances in Psychological Science* 33(11):1926–1941; 33 studies, N = 43,427) reports attitude .41 > norm .30 > PBC .23. Cite the specific source rather than a shorthand ordering.
 
    Controlled unit tests remain useful as quick checks —
    - Career-delay memory → `pbc_score` should decrease.
    - Parental-pressure memory → `subjective_norm_score` should increase.
    - Financial-support policy memory → `pbc_score` should increase.
-3. **Singapore-context validity**: Policy inputs must match real Singapore instruments; baseline TPB distributions should be plausible against M&P 2021 survey findings.
+3. **Annotation validity**: `financial_security_score` is validated (5 raters, Krippendorff α ≈ 0.738). The equivalent human-coded benchmark for TPB relevance labels has **not** been built and remains an open limitation.
+4. **Internal validity**: C0 must be flat with zero input (update gating); effects are measured net of that control.
 
 ---
 
@@ -313,6 +352,8 @@ Before interpreting simulation results, verify:
 - Single social network (one layer)
 - 100 agents, 1-week timesteps
 - Four experimental conditions (C0–C3)
+- Two agent architectures: TPB belief layer (`engines/engine.py`) and no-TPB VacSim-direct (`engines/engine_direct.py`), compared as a robustness dimension
+- Policy category as the primary treatment (financial / caregiving)
 - Fertility *intention* only (not actual birth behaviour)
 
 **Out of scope (do not model):**
@@ -400,6 +441,10 @@ Platform notes:
 - Social contagion in fertility: Balbo & Barban (2012)
 - VacSim simulation framework: memory saliency and social post mechanics
 - Nemotron-Personas-Singapore: nvidia/Nemotron-Personas-Singapore (HuggingFace)
+- **Flexible work → fertility intention (experimental):** Wang & Dong (2024), *European Journal of Population* 40(1):33 — Singapore survey experiment, N = 1,092, OR 1.55–1.79
+- **Paternity leave → behaviour (null):** Yeung et al. (2023), *Journal of Marriage and Family* — Singapore longitudinal, N = 1,835
+- **TPB construct ordering (meta-analysis):** Liang, Zhao, Zhao, Yue & He (2025), *Advances in Psychological Science* 33(11):1926–1941 — 33 studies, N = 43,427; attitude .41 > norm .30 > PBC .23
+- NDR 2026 marriage & parenthood measures: Population Singapore (17 Aug 2026)
 
 # VacSim Mapping
 
