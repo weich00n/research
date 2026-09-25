@@ -10,3 +10,4 @@ reports
 *.pyc
 .DS_Store
 .claude
+*.docx
