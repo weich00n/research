@@ -117,7 +117,8 @@ def _build_context_queue(corpus_path, mix, seed):
 
 def build_news_schedule(num_timesteps, category=None, start_timestep=1,
                         corpus_path=None, seed=RANDOM_STATE,
-                        context_corpus_path=None, context_mix="balanced"):
+                        context_corpus_path=None, context_mix="balanced",
+                        policy_names=None):
     """Map timestep -> list[News], cycling through the chosen policy scenario.
 
     One policy news item is broadcast to all agents each week, in a fixed
@@ -144,9 +145,31 @@ def build_news_schedule(num_timesteps, category=None, start_timestep=1,
     `corpus_path` is None while `context_corpus_path` is given, the schedule
     contains context articles only (no policy items) — the no-policy
     background arm for the situation factorial.
+
+    With `policy_names` (a list of exact instrument names), the rotation is
+    restricted to those instruments, in the order given. This exists for the
+    **dose-matched** category comparison: `financial` has 3 instruments and
+    `caregiving` has 5, so over 12 weeks each financial instrument repeats ~4
+    times against caregiving's ~2.4. Novelty rate therefore differs between the
+    categories, and a week-by-week decomposition showed the category gap only
+    opens once those rates diverge (week 4). Restricting caregiving to 3
+    instruments equalises the schedule shape so the contrast is content, not
+    dose. `None` (the default) leaves every existing run's schedule untouched.
     """
     context_only = context_corpus_path is not None and corpus_path is None
     policies = get_policies(category)
+    if policy_names is not None:
+        wanted = list(policy_names)
+        by_name = {p.name: p for p in policies}
+        missing = [n for n in wanted if n not in by_name]
+        if missing:
+            raise ValueError(
+                f"policy_names not found in category {category!r}: {missing}. "
+                f"Available: {sorted(by_name)}")
+        # Caller order is the broadcast order — the dose-matched design depends
+        # on controlling how many distinct instruments cycle, so this is not
+        # re-sorted back into POLICIES order.
+        policies = [by_name[n] for n in wanted]
     if not policies:
         raise ValueError(f"No policies for category {category!r}")
     queues = _build_variant_queues(load_news_corpus(corpus_path), seed) \

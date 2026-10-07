@@ -43,6 +43,14 @@ def main():
     parser.add_argument("--policy-category", choices=["financial", "caregiving", "combined"],
                         default="combined",
                         help="policy scenario for the news schedule (C2/C3)")
+    parser.add_argument("--policy-names", nargs="+", default=None,
+                        help="restrict the rotation to these exact instrument "
+                             "names, in this order. For the dose-matched "
+                             "category comparison: financial has 3 instruments "
+                             "and caregiving 5, so over 12 weeks their novelty "
+                             "rates differ and the category gap only opens once "
+                             "they diverge. Naming 3 caregiving instruments "
+                             "equalises the schedule shape.")
     parser.add_argument("--news-corpus", default=None,
                         help="pre-generated article corpus for the news schedule "
                              "(generate_news_corpus.py output)")
@@ -112,7 +120,11 @@ def main():
         news_schedule = build_news_schedule(args.timesteps, category=category,
                                             corpus_path=args.news_corpus,
                                             context_corpus_path=args.context_corpus,
-                                            context_mix=args.context_mix)
+                                            context_mix=args.context_mix,
+                                            policy_names=args.policy_names)
+        if args.policy_names:
+            print(f"Dose-matched rotation ({len(args.policy_names)} instruments): "
+                  f"{', '.join(args.policy_names)}")
 
     sim = DirectSimulation(
         agents=agents,
