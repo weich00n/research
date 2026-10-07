@@ -11,6 +11,7 @@ OpenRouter or any local OpenAI-compatible endpoint (llama.cpp, Ollama, vLLM):
 """
 
 import os
+import threading
 import time
 
 import requests
@@ -24,6 +25,95 @@ load_dotenv()
 logger = get_logger("llm")
 
 DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
+
+
+class BudgetExceeded(RuntimeError):
+    """Raised when cumulative paid-API spend passes LLM_BUDGET_USD.
+
+    Safe to raise mid-run: the engines checkpoint per completed week and abort a
+    week without a partial save, so `--resume` restarts cleanly at the last
+    finished week.
+    """
+
+
+class SpendGuard:
+    """Tracks paid-API spend from the `usage` block the provider returns and
+    stops the run before it passes a cap.
+
+    Inert unless LLM_BUDGET_USD is set, so local-vLLM runs are untouched. Counts
+    the tokens the API actually billed rather than estimating from prompt length,
+    and is thread-safe because the engines run agent-weeks through a pool.
+
+    This is a SECOND line of defence. The real hard cap is a credit limit on the
+    OpenRouter key itself, which holds even if this process is killed or the
+    accounting drifts.
+    """
+
+    def __init__(self):
+        self.budget = float(os.getenv("LLM_BUDGET_USD", "0") or 0)
+        self.price_in = float(os.getenv("LLM_PRICE_IN_PER_M", "0") or 0)
+        self.price_out = float(os.getenv("LLM_PRICE_OUT_PER_M", "0") or 0)
+        self.enabled = self.budget > 0 and (self.price_in > 0 or self.price_out > 0)
+        self._lock = threading.Lock()
+        self.calls = 0
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
+        self._warned = set()
+
+    @property
+    def cost(self):
+        return (self.prompt_tokens / 1e6 * self.price_in
+                + self.completion_tokens / 1e6 * self.price_out)
+
+    def record(self, usage):
+        """Add one call's usage; raise BudgetExceeded once the cap is passed."""
+        if not self.enabled:
+            return
+        with self._lock:
+            self.calls += 1
+            self.prompt_tokens += int(usage.get("prompt_tokens", 0) or 0)
+            self.completion_tokens += int(usage.get("completion_tokens", 0) or 0)
+            cost = self.cost
+            for frac in (0.5, 0.8, 0.95):
+                if cost >= self.budget * frac and frac not in self._warned:
+                    self._warned.add(frac)
+                    logger.warning(f"LLM spend at {frac:.0%} of budget: "
+                                   f"${cost:.2f} / ${self.budget:.2f} "
+                                   f"after {self.calls} calls")
+            if cost >= self.budget:
+                raise BudgetExceeded(
+                    f"spend ${cost:.2f} reached the ${self.budget:.2f} cap after "
+                    f"{self.calls} calls ({self.prompt_tokens:,} prompt + "
+                    f"{self.completion_tokens:,} completion tokens). Run aborted "
+                    f"before the next call. Re-run with --resume to continue from "
+                    f"the last completed week, or raise LLM_BUDGET_USD.")
+
+    def check(self):
+        """Raise BEFORE issuing a request if the cap is already passed.
+
+        Without this the engines' per-agent retry loop would bill several more
+        calls after the cap, since record() only runs once a response is back.
+        """
+        if not self.enabled:
+            return
+        with self._lock:
+            if self.cost >= self.budget:
+                raise BudgetExceeded(
+                    f"spend ${self.cost:.2f} is at or past the ${self.budget:.2f} "
+                    f"cap; refusing further calls. Re-run with --resume after "
+                    f"raising LLM_BUDGET_USD.")
+
+    def summary(self):
+        if not self.enabled:
+            return f"{self.calls} calls (no budget cap set)"
+        return (f"{self.calls} calls, {self.prompt_tokens:,} prompt + "
+                f"{self.completion_tokens:,} completion tokens, "
+                f"${self.cost:.2f} of ${self.budget:.2f} budget")
+
+
+# Process-wide, so every LLMClient in a run shares one budget rather than each
+# getting its own allowance.
+SPEND_GUARD = SpendGuard()
 
 
 class LLMClient:
@@ -92,6 +182,7 @@ class LLMClient:
         headers = {"Authorization": f"Bearer {self.api_key}"}
         last_error = None
         start = time.time()
+        SPEND_GUARD.check()  # fail before spending, not after
         for attempt in range(self.max_retries):
             try:
                 resp = requests.post(url or self.url, json=payload, headers=headers,
@@ -112,7 +203,11 @@ class LLMClient:
                     time.sleep(wait)
                     continue
                 resp.raise_for_status()
-                content = resp.json()["choices"][0]["message"]["content"]
+                body = resp.json()
+                # Record before the empty-content check: an empty completion is
+                # still billed, so it must count against the cap.
+                SPEND_GUARD.record(body.get("usage") or {})
+                content = body["choices"][0]["message"]["content"]
                 # Reasoning models occasionally return null/empty content (the
                 # budget went to the hidden reasoning trace). Treat as transient
                 # and retry rather than crashing downstream on len(None).
